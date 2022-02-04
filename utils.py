@@ -88,3 +88,6 @@ def IOC_NR(nr: int) -> int:
 
 def IOC_SIZE(nr: int) -> int:
     return (nr >> _IOC_SIZESHIFT) & _IOC_SIZEMASK
+
+def set_bits(offset: int, size: int, value: int) -> int:
+    return ((value & ((1 << (size + 1)) - 1)) << offset)
