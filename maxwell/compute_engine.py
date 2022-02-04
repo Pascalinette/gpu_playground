@@ -3,14 +3,6 @@ from utils import set_bits
 from maxwell.hw import *
 from maxwell.hw.compute_b import *
 
-# TODO: Parse NVIDIA bitfields from open-gpu docs or maybe define our own register definition format to simplify this mess
-NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT_OFFSET = 0
-NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT_SIZE = 0
-
-NVB1C0_LAUNCH_DMA_COMPLETION_TYPE_OFFSET = 4
-NVB1C0_LAUNCH_DMA_COMPLETION_TYPE_SIZE = 1
-
-
 def memcpy_inline_host_to_device(
     command_buffer: CommandBuffer, dest_address: int, data: bytes
 ):
@@ -28,15 +20,9 @@ def memcpy_inline_host_to_device(
 
     command_buffer.write_u32(IncrCommand(NVB1C0_LAUNCH_DMA, SUBCHANNEL_ID_COMPUTE, 1))
 
-    launch_dma_value = set_bits(
-        NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT_OFFSET,
-        NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT_SIZE,
-        NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT_PITCH,
-    ) | set_bits(
-        NVB1C0_LAUNCH_DMA_COMPLETION_TYPE_OFFSET,
-        NVB1C0_LAUNCH_DMA_COMPLETION_TYPE_SIZE,
-        NVB1C0_LAUNCH_DMA_COMPLETION_TYPE_FLUSH_ONLY,
-    )
+    launch_dma_value = NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT(
+        NVB1C0_LAUNCH_DMA_DST_MEMORY_LAYOUT_PITCH
+    ) | NVB1C0_LAUNCH_DMA_COMPLETION_TYPE(NVB1C0_LAUNCH_DMA_COMPLETION_TYPE_FLUSH_ONLY)
 
     command_buffer.write_u32(launch_dma_value)
 

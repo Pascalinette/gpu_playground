@@ -430,6 +430,20 @@ class SimpleMacroDefinition(object):
         return f'SimpleMacroDefinition(name="{self.name}", value="{self.value}")'
 
 
+class NvBitfieldMacroDefinition(object):
+    name: str
+    offset_end: int
+    offset_start: int
+
+    def __init__(self, name: str, offset_end: int, offset_start: int) -> None:
+        self.name = name
+        self.offset_end = offset_end
+        self.offset_start = offset_start
+
+    def __repr__(self) -> str:
+        return f'NvBitfieldMacroDefinition(name="{self.name}", offset_end="{self.offset_end}", offset_start="{self.offset_start}")'
+
+
 def print_node_tokens(node: Cursor) -> None:
     tokens = list(node.get_tokens())
 
@@ -702,9 +716,43 @@ def try_evaluate_ioctl_macro(
     )
 
 
+def try_evaluate_nv_bitfield_macro(node: Cursor) -> Optional[NvBitfieldMacroDefinition]:
+    assert node.kind == CursorKind.MACRO_DEFINITION
+
+    tokens = list(node.get_tokens())
+
+    # Ensure we have a valid macro first (always at least the key and value)
+    if len(tokens) != 4:
+        return None
+
+    macro_identifier = tokens[0]
+
+    # Sanity check that the identifier is really one, otherwise error out
+    if macro_identifier.kind != TokenKind.IDENTIFIER:
+        print_node_tokens(node)
+        return None
+
+    # Ensure that we have punctionation in between
+    if tokens[2].kind != TokenKind.PUNCTUATION:
+        print_node_tokens(node)
+        return None
+
+    offset_start = try_parse_c_integer(tokens[1].spelling)
+    offset_end = try_parse_c_integer(tokens[3].spelling)
+
+    if offset_start is None or offset_end is None:
+        return None
+
+    return NvBitfieldMacroDefinition(
+        macro_identifier.spelling, offset_start, offset_end
+    )
+
+
 def get_macro_definition_value(
     structs: List[ParsedStruct], constants: List[SimpleMacroDefinition], node: Cursor
-) -> Union[SimpleMacroDefinition, IoctlMacroDefinition, None]:
+) -> Union[
+    SimpleMacroDefinition, IoctlMacroDefinition, NvBitfieldMacroDefinition, None
+]:
     assert node.kind == CursorKind.MACRO_DEFINITION
 
     tokens = list(node.get_tokens())
@@ -727,9 +775,26 @@ def get_macro_definition_value(
     if res is not None:
         return res
 
-    # TODO: support NVIDIA bitfields def from open-gpu docs
+    res = try_evaluate_ioctl_macro(structs, constants, node)
 
-    return try_evaluate_ioctl_macro(structs, constants, node)
+    if res is not None:
+        return res
+
+    return try_evaluate_nv_bitfield_macro(node)
+
+
+def print_nv_bitfield(stream: CodeStream, nv_bitfield: NvBitfieldMacroDefinition):
+    func_name = nv_bitfield.name.upper()
+
+    stream.write_line(f"def {func_name}(value: int) -> int:")
+    stream.indent()
+    stream.write_line(
+        f"return set_bits({nv_bitfield.offset_start}, {nv_bitfield.offset_end - nv_bitfield.offset_start}, value)"
+    )
+    stream.unindent()
+
+    stream.write_line()
+    stream.write_line()
 
 
 def print_ioctl_macro(stream: CodeStream, ioctl: IoctlMacroDefinition):
@@ -776,6 +841,7 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
     structs: List[ParsedStruct] = list()
     constants: List[SimpleMacroDefinition] = list()
     ioctls: List[IoctlMacroDefinition] = list()
+    nv_bitfields: List[NvBitfieldMacroDefinition] = list()
 
     possible_forward_declaration_macros: List[Cursor] = list()
 
@@ -798,6 +864,10 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
                     constants.append(macro_def)
                 elif type(macro_def) is IoctlMacroDefinition:
                     ioctls.append(macro_def)
+                elif type(macro_def) is NvBitfieldMacroDefinition:
+                    nv_bitfields.append(macro_def)
+                else:
+                    raise Exception("TODO")
             else:
                 possible_forward_declaration_macros.append(child)
         elif child.kind == CursorKind.MACRO_INSTANTIATION:
@@ -816,8 +886,13 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
                 constants.append(macro_def)
             elif type(macro_def) is IoctlMacroDefinition:
                 ioctls.append(macro_def)
+            # Shouldn't be possible
+            elif type(macro_def) is NvBitfieldMacroDefinition:
+                nv_bitfields.append(macro_def)
+            else:
+                raise Exception("TODO")
         else:
-            #print_node_tokens(child)
+            # print_node_tokens(child)
             pass
 
     # Now let's output
@@ -826,7 +901,7 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
     if len(structs) != 0:
         stream.write_line("from ctypes import *")
 
-    if len(ioctls) != 0:
+    if len(ioctls) != 0 or len(nv_bitfields) != 0:
         stream.write_line("from utils import *")
 
     stream.write_line()
@@ -841,6 +916,12 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
         stream.write_line(
             f"{constant.name}: {type(constant.value).__name__} = 0x{constant.value:X}"
         )
+
+    stream.write_line()
+    stream.write_line()
+
+    for nv_bitfield in nv_bitfields:
+        print_nv_bitfield(stream, nv_bitfield)
 
     stream.write_line()
     stream.write_line()

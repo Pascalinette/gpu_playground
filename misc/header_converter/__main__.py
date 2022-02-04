@@ -9,10 +9,12 @@ from . import *
 
 c = "/usr/lib/aarch64-linux-gnu/libclang-13.so"
 
-parser = ArgumentParser(description='Process a C header to Python.')
-parser.add_argument('target_header', help='The C header')
-parser.add_argument('output_file', help='The python generated file')
-parser.add_argument('--libclang_path', default=None, help='The search path for libclang.so')
+parser = ArgumentParser(description="Process a C header to Python.")
+parser.add_argument("target_header", help="The C header")
+parser.add_argument("output_file", help="The python generated file")
+parser.add_argument(
+    "--libclang_path", default=None, help="The search path for libclang.so"
+)
 
 args = parser.parse_args()
 
@@ -25,5 +27,7 @@ if args.libclang_path is not None:
     cl.Config.set_library_file(args.libclang_path)
 
 idx = clang.cindex.Index.create()
-tu = idx.parse(args.target_header, options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD)
+tu = idx.parse(
+    args.target_header, options=TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD
+)
 parse_header(args.target_header, args.output_file, tu.cursor)
