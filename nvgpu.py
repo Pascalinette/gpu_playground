@@ -10,8 +10,8 @@ from ctypes import (
 )
 from mmap import MAP_SHARED, PROT_READ, PROT_WRITE, mmap
 from select import *
-import struct
 from typing import Any, List, Optional, Tuple, Union, overload
+from command_buffer import *
 from nvmap_header import (
     NVMAP_IOC_FREE,
     nvmap_alloc_handle,
@@ -20,7 +20,6 @@ from nvmap_header import (
     nvmap_ioc_create,
     nvmap_ioc_get_fd,
 )
-from utils import _IOC_WRITE, IOC
 from nvgpu_header import (
     NVGPU_AS_MAP_BUFFER_FLAGS_CACHEABLE,
     NVGPU_AS_MAP_BUFFER_FLAGS_DIRECT_KIND_CTRL,
@@ -55,8 +54,6 @@ from nvgpu_header import (
 )
 from os import close
 import errno
-
-from command_utils import *
 
 libc = CDLL("libc.so.6")
 get_errno_loc = libc.__errno_location
@@ -380,7 +377,7 @@ class GpuMemory(object):
         self.nvmap_instance.free(self.nvmap_handle)
 
 
-class SubmittedCommandList(object):
+class SubmittedCommandBuffer(object):
     gpu_memory: GpuMemory
     external_wait_fd: int
     external_wait: poll
@@ -403,7 +400,7 @@ class SubmittedCommandList(object):
         close(self.external_wait_fd)
 
 
-class GpuChannel(object):
+class TegraGpuChannel(object):
     PAGE_SIZE: int = 0x1000
 
     nvhost_gpu_ctrl: NvHostGpuCtrl
@@ -441,21 +438,21 @@ class GpuChannel(object):
         )
 
         # Finaly bind all channels
-        setup_engines_command_list = CommandList()
-        setup_engines_command_list.write_u32(BIND_CHANNEL_3D)
-        setup_engines_command_list.write_u32(self.characteristics.threed_class)
-        setup_engines_command_list.write_u32(BIND_CHANNEL_COMPUTE)
-        setup_engines_command_list.write_u32(self.characteristics.compute_class)
-        setup_engines_command_list.write_u32(BIND_CHANNEL_I2M)
-        setup_engines_command_list.write_u32(
+        setup_engines_command_buffer = CommandBuffer()
+        setup_engines_command_buffer.write_u32(BIND_CHANNEL_3D)
+        setup_engines_command_buffer.write_u32(self.characteristics.threed_class)
+        setup_engines_command_buffer.write_u32(BIND_CHANNEL_COMPUTE)
+        setup_engines_command_buffer.write_u32(self.characteristics.compute_class)
+        setup_engines_command_buffer.write_u32(BIND_CHANNEL_I2M)
+        setup_engines_command_buffer.write_u32(
             self.characteristics.inline_to_memory_class
         )
-        setup_engines_command_list.write_u32(BIND_CHANNEL_2D)
-        setup_engines_command_list.write_u32(self.characteristics.twod_class)
-        setup_engines_command_list.write_u32(BIND_CHANNEL_DMA)
-        setup_engines_command_list.write_u32(self.characteristics.dma_copy_class)
+        setup_engines_command_buffer.write_u32(BIND_CHANNEL_2D)
+        setup_engines_command_buffer.write_u32(self.characteristics.twod_class)
+        setup_engines_command_buffer.write_u32(BIND_CHANNEL_DMA)
+        setup_engines_command_buffer.write_u32(self.characteristics.dma_copy_class)
         setup_engines_submitted_command = self.submit_command(
-            setup_engines_command_list
+            setup_engines_command_buffer
         )
         setup_engines_submitted_command.wait()
         setup_engines_submitted_command.close()
@@ -522,17 +519,19 @@ class GpuChannel(object):
 
     def submit_commands(
         self,
-        command_lists: List["CommandList"],
-        external_wait: Optional[SubmittedCommandList] = None,
-    ) -> List[SubmittedCommandList]:
-        command_lists_gpu_memory: List[GpuMemory] = list()
+        command_buffers: List[CommandBuffer],
+        external_wait: Optional[SubmittedCommandBuffer] = None,
+    ) -> List[SubmittedCommandBuffer]:
+        command_buffers_gpu_memory: List[GpuMemory] = list()
 
-        for command_list in command_lists:
-            command_lists_gpu_memory.append(command_list.copy_to_gpu(self))
+        for command_buffer in command_buffers:
+            memory = self.create_gpu_memory(len(command_buffer.buffer))
+            memory[0 : len(command_buffer.buffer)] = command_buffer.buffer
+            command_buffers_gpu_memory.append(memory)
 
         user_queue: List[c_ulong] = list()
 
-        for gpu_memory in command_lists_gpu_memory:
+        for gpu_memory in command_buffers_gpu_memory:
             user_queue.append(
                 c_ulong(gpu_memory.gpu_address | (gpu_memory.user_size // 4) << 42)
             )
@@ -556,43 +555,18 @@ class GpuChannel(object):
         external_wait_poll = poll()
         external_wait_poll.register(external_wait_fd, POLLOUT | POLLIN)
 
-        submitted_command_lists: List[SubmittedCommandList] = list()
+        submitted_command_buffers: List[SubmittedCommandBuffer] = list()
 
-        for gpu_memory in command_lists_gpu_memory:
-            submitted_command_lists.append(
-                SubmittedCommandList(gpu_memory, external_wait_fd, external_wait_poll)
+        for gpu_memory in command_buffers_gpu_memory:
+            submitted_command_buffers.append(
+                SubmittedCommandBuffer(gpu_memory, external_wait_fd, external_wait_poll)
             )
 
-        return submitted_command_lists
+        return submitted_command_buffers
 
     def submit_command(
         self,
-        command_list: "CommandList",
-        external_wait: Optional[SubmittedCommandList] = None,
-    ) -> SubmittedCommandList:
-        return self.submit_commands([command_list], external_wait)[0]
-
-
-class CommandList(object):
-    buffer: bytearray
-
-    def __init__(self) -> None:
-        self.buffer = bytearray()
-
-    # TODO: high level wait for fences on GPU
-
-    def write_u32(self, data: int) -> None:
-        self.write_bytes(struct.pack("I", data))
-
-    def write_u64(self, data: int) -> None:
-        self.write_bytes(struct.pack("Q", data))
-
-    def write_bytes(self, data: bytes) -> None:
-        self.buffer += bytearray(data)
-
-    def copy_to_gpu(self, channel: GpuChannel) -> GpuMemory:
-        memory = channel.create_gpu_memory(len(self.buffer))
-
-        memory[0 : len(self.buffer)] = self.buffer
-
-        return memory
+        command_buffer: CommandBuffer,
+        external_wait: Optional[SubmittedCommandBuffer] = None,
+    ) -> SubmittedCommandBuffer:
+        return self.submit_commands([command_buffer], external_wait)[0]

@@ -1,3 +1,5 @@
+import struct
+
 COMMAND_SUBMISSION_MODE_INCREASING_OLD = 0
 COMMAND_SUBMISSION_MODE_INCREASING = 1
 COMMAND_SUBMISSION_MODE_NON_INCREASING_OLD = 2
@@ -47,3 +49,19 @@ BIND_CHANNEL_COMPUTE = Command(0x0, SUBCHANNEL_ID_COMPUTE, 1, COMMAND_SUBMISSION
 BIND_CHANNEL_I2M = Command(0x0, SUBCHANNEL_ID_I2M, 1, COMMAND_SUBMISSION_MODE_INCREASING)
 BIND_CHANNEL_2D = Command(0x0, SUBCHANNEL_ID_2D, 1, COMMAND_SUBMISSION_MODE_INCREASING)
 BIND_CHANNEL_DMA = Command(0x0, SUBCHANNEL_ID_DMA, 1, COMMAND_SUBMISSION_MODE_INCREASING)
+
+
+class CommandBuffer(object):
+    buffer: bytearray
+
+    def __init__(self) -> None:
+        self.buffer = bytearray()
+
+    def write_u32(self, data: int) -> None:
+        self.write_bytes(struct.pack("I", data))
+
+    def write_u64(self, data: int) -> None:
+        self.write_bytes(struct.pack("Q", data))
+
+    def write_bytes(self, data: bytes) -> None:
+        self.buffer += bytearray(data)
