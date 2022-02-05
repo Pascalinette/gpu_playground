@@ -376,6 +376,9 @@ class GpuMemory(object):
         # FIXME: missing unmap of the address space here
         self.nvmap_instance.free(self.nvmap_handle)
 
+    def __repr__(self) -> str:
+        return f"GpuMemory(nvmap_handle={self.nvmap_handle}, user_size=0x{self.user_size:x}, gpu_address=0x{self.gpu_address:x}, gpu_memory_size=0x{self.gpu_memory_size:x})"
+
 
 class SubmittedCommandBuffer(object):
     gpu_memory: GpuMemory
