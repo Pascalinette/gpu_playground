@@ -2,6 +2,8 @@ from command_buffer import *
 from utils import set_bits
 from maxwell.hw import *
 from maxwell.hw.compute_b import *
+from maxwell.hw.compute_b_qmd import *
+
 
 def memcpy_inline_host_to_device(
     command_buffer: CommandBuffer, dest_address: int, data: bytes

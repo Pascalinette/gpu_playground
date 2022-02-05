@@ -444,6 +444,35 @@ class NvBitfieldMacroDefinition(object):
         return f'NvBitfieldMacroDefinition(name="{self.name}", offset_end="{self.offset_end}", offset_start="{self.offset_start}")'
 
 
+class NvBitfieldQmdMacroDefinition(NvBitfieldMacroDefinition):
+    offset_next_element: int
+    element_count: int
+
+    def __init__(
+        self,
+        name: str,
+        offset_end: int,
+        offset_start: int,
+        offset_next_element: int = 0,
+        element_count: int = 1,
+    ) -> None:
+        self.offset_next_element = offset_next_element
+        self.element_count = element_count
+        super().__init__(name, offset_end, offset_start)
+
+    def __repr__(self) -> str:
+        return f'NvBitfieldQmdMacroDefinition(name="{self.name}", offset_end="{self.offset_end}", offset_start="{self.offset_start}, offset_next_element="{self.offset_next_element}", element_count="{self.element_count}")'
+
+
+class QmdStruct(object):
+    name: str
+    fields: List[Tuple[str, int, int]]
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.fields = list()
+
+
 def print_node_tokens(node: Cursor) -> None:
     tokens = list(node.get_tokens())
 
@@ -748,6 +777,73 @@ def try_evaluate_nv_bitfield_macro(node: Cursor) -> Optional[NvBitfieldMacroDefi
     )
 
 
+def try_evaluate_nv_bitfield_qmd_macro(
+    node: Cursor,
+) -> Optional[NvBitfieldQmdMacroDefinition]:
+    assert node.kind == CursorKind.MACRO_DEFINITION
+
+    tokens = list(node.get_tokens())
+
+    is_variable_variant = len(tokens) == 26
+
+    # Ensure we have a valid macro first (always at least the key and value)
+    if len(tokens) != 7 and not is_variable_variant:
+        return None
+
+    macro_identifier = tokens[0]
+
+    # Sanity check that the identifier is really one, otherwise error out
+    if macro_identifier.kind != TokenKind.IDENTIFIER or (
+        not is_variable_variant
+        and (tokens[1].kind != TokenKind.IDENTIFIER or tokens[1].spelling != "MW")
+    ):
+        return None
+
+    # Ensure that we have punctionation in between
+    if not is_variable_variant and tokens[4].kind != TokenKind.PUNCTUATION:
+        return None
+
+    if is_variable_variant:
+        offset_end_index = 7
+        offset_start_index = 17
+        bitfield_next_offset = try_parse_c_integer(tokens[23].spelling)
+
+        if bitfield_next_offset is None:
+            return None
+    else:
+        offset_end_index = 3
+        offset_start_index = 5
+        bitfield_next_offset = None
+
+    offset_end = try_parse_c_integer(tokens[offset_end_index].spelling)
+    offset_start = try_parse_c_integer(tokens[offset_start_index].spelling)
+
+    if offset_start is None or offset_end is None:
+        return None
+
+    element_count = 0
+
+    if bitfield_next_offset is not None:
+        if "CONSTANT_BUFFER" in macro_identifier.spelling:
+            # FIXME: we assume 8 all the time but this can change between archs...
+            element_count = 8
+        else:
+            print("Found variable QMD field but size is unknown")
+            return None
+
+        return NvBitfieldQmdMacroDefinition(
+            macro_identifier.spelling,
+            offset_end,
+            offset_start,
+            bitfield_next_offset,
+            element_count,
+        )
+
+    return NvBitfieldQmdMacroDefinition(
+        macro_identifier.spelling, offset_end, offset_start
+    )
+
+
 def get_macro_definition_value(
     structs: List[ParsedStruct], constants: List[SimpleMacroDefinition], node: Cursor
 ) -> Union[
@@ -780,7 +876,12 @@ def get_macro_definition_value(
     if res is not None:
         return res
 
-    return try_evaluate_nv_bitfield_macro(node)
+    res = try_evaluate_nv_bitfield_macro(node)
+
+    if res is not None:
+        return res
+
+    return try_evaluate_nv_bitfield_qmd_macro(node)
 
 
 def print_nv_bitfield(stream: CodeStream, nv_bitfield: NvBitfieldMacroDefinition):
@@ -793,6 +894,27 @@ def print_nv_bitfield(stream: CodeStream, nv_bitfield: NvBitfieldMacroDefinition
     )
     stream.unindent()
 
+    stream.write_line()
+    stream.write_line()
+
+
+def print_nv_qmd(stream: CodeStream, qmd: QmdStruct):
+    stream.write_line(f"class {qmd.name}(Structure):")
+    stream.indent()
+
+    stream.write_line("_fields_ = [")
+    stream.indent()
+
+    unamed_index = 0
+
+    for (field_name, bitfield_end, bitfield_start) in qmd.fields:
+        stream.write_line(
+            f'("{field_name}", c_uint, {bitfield_end - bitfield_start + 1}),'
+        )
+
+    stream.unindent()
+    stream.write_line("]")
+    stream.unindent()
     stream.write_line()
     stream.write_line()
 
@@ -837,11 +959,50 @@ def print_ioctl_function(stream: CodeStream, ioctl: IoctlMacroDefinition):
     stream.write_line()
 
 
+def process_qmd_bitfield(
+    qmds: List[QmdStruct], raw_qmd_bitfield: NvBitfieldQmdMacroDefinition
+):
+    data = raw_qmd_bitfield.name.split("_")
+    qmd_name = (data[1] + data[2]).lower()
+    field_name = "_".join(data[3:]).lower()
+
+    target_qmd = None
+
+    for qmd in qmds:
+        if qmd.name == qmd_name:
+            target_qmd = qmd
+            break
+
+    if target_qmd is None:
+        target_qmd = QmdStruct(qmd_name)
+
+        qmds.append(target_qmd)
+
+    if (
+        raw_qmd_bitfield.element_count != 1
+        and raw_qmd_bitfield.offset_next_element != 0
+    ):
+        for i in range(raw_qmd_bitfield.element_count):
+            special_field_name = f"{field_name}_{i}"
+            offset_end = (
+                raw_qmd_bitfield.offset_end + i * raw_qmd_bitfield.offset_next_element
+            )
+            offset_start = (
+                raw_qmd_bitfield.offset_start + i * raw_qmd_bitfield.offset_next_element
+            )
+            target_qmd.fields.append((special_field_name, offset_end, offset_start))
+    else:
+        target_qmd.fields.append(
+            (field_name, raw_qmd_bitfield.offset_end, raw_qmd_bitfield.offset_start)
+        )
+
+
 def parse_header(target_header: str, output_file_path: str, node: Cursor) -> None:
     structs: List[ParsedStruct] = list()
     constants: List[SimpleMacroDefinition] = list()
     ioctls: List[IoctlMacroDefinition] = list()
     nv_bitfields: List[NvBitfieldMacroDefinition] = list()
+    raw_qmd_bitfields: List[NvBitfieldQmdMacroDefinition] = list()
 
     possible_forward_declaration_macros: List[Cursor] = list()
 
@@ -866,6 +1027,8 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
                     ioctls.append(macro_def)
                 elif type(macro_def) is NvBitfieldMacroDefinition:
                     nv_bitfields.append(macro_def)
+                elif type(macro_def) is NvBitfieldQmdMacroDefinition:
+                    raw_qmd_bitfields.append(macro_def)
                 else:
                     raise Exception("TODO")
             else:
@@ -889,16 +1052,29 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
             # Shouldn't be possible
             elif type(macro_def) is NvBitfieldMacroDefinition:
                 nv_bitfields.append(macro_def)
+            # Shouldn't be possible
+            elif type(macro_def) is NvBitfieldQmdMacroDefinition:
+                raw_qmd_bitfields.append(macro_def)
             else:
                 raise Exception("TODO")
         else:
             # print_node_tokens(child)
             pass
 
+    # Process QMD definitions
+    qmds: List[QmdStruct] = list()
+
+    for raw_qmd_bitfield in raw_qmd_bitfields:
+        process_qmd_bitfield(qmds, raw_qmd_bitfield)
+
+    for qmd in qmds:
+        # Ensure the bitfield is sorted correctly
+        qmd.fields.sort(key=lambda data: data[2])
+
     # Now let's output
     stream = create_codestream(datetime.now())
 
-    if len(structs) != 0:
+    if len(structs) != 0 or len(qmds) != 0:
         stream.write_line("from ctypes import *")
 
     if len(ioctls) != 0 or len(nv_bitfields) != 0:
@@ -922,6 +1098,12 @@ def parse_header(target_header: str, output_file_path: str, node: Cursor) -> Non
 
     for nv_bitfield in nv_bitfields:
         print_nv_bitfield(stream, nv_bitfield)
+
+    stream.write_line()
+    stream.write_line()
+
+    for qmd in qmds:
+        print_nv_qmd(stream, qmd)
 
     stream.write_line()
     stream.write_line()
