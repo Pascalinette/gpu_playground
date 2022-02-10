@@ -133,25 +133,6 @@ def parse_nvdis_output(raw_output: bytes) -> List[Tuple[int, str, int]]:
     return result
 
 
-def parse_instruction_name(instruction_raw: str) -> str:
-    raw_inst_components = instruction_raw.split(" ")
-
-    instruction_with_modifiers = raw_inst_components[0]
-
-    # Exclude predicate modifier that could be before the instruction name
-    if instruction_with_modifiers[0] == "@":
-        instruction_with_modifiers = raw_inst_components[1]
-
-    # Finally only grab the base name
-    instruction = instruction_with_modifiers.split(".")[0]
-
-    # Remove usual final semicolon
-    if instruction[-1] == ";":
-        instruction = instruction[0:-1]
-
-    return instruction
-
-
 def split_instruction(instruction_raw: str) -> List[str]:
     raw_inst_components = instruction_raw.split(" ")
 
@@ -473,15 +454,15 @@ def parse_disassembly(disassembly: str) -> list:
         data_type = get_instruction_argument_type(raw_part)
 
         data = {
-            "index": skip_index + raw_part_index,
+            "index": skip_index + 1 + raw_part_index,
             "type": data_type,
             "value": raw_part,
         }
 
         if data["type"] == "unknown":
             pass
-            print(disassembly)
-            print(data)
+            # print(disassembly)
+            # print(data)
 
             # raise Exception((data, disassembly))
 
@@ -490,8 +471,88 @@ def parse_disassembly(disassembly: str) -> list:
     return result
 
 
+def get_instruction_part_by_type(
+    parsed_instruction: list, part_type: str
+) -> Optional[dict]:
+    for part in parsed_instruction:
+        if part["type"] == part_type:
+            return part
+
+    return None
+
+
+def get_instruction_part_by_index(
+    parsed_instruction: list, part_index: int
+) -> Optional[dict]:
+    for part in parsed_instruction:
+        if part["index"] == part_index:
+            return part
+
+    return None
+
+
+def parse_instruction_name(instruction_raw: str) -> str:
+    parsed_instruction = parse_disassembly(instruction_raw)
+
+    instruction_with_modifiers_def = parsed_instruction[0]
+
+    if instruction_with_modifiers_def["type"] == "cond_predicate":
+        instruction_with_modifiers_def = parsed_instruction[1]
+
+    # Finally only grab the base name
+    instruction = instruction_with_modifiers_def["value"].split(".")[0]
+
+    return instruction
+
+
+def search_register_bits(
+    file_name: str, instruction_value: int, register_part: dict, sm_version: str
+) -> Optional[dict]:
+    sm_description = get_sm_desc(sm_version)
+    register_count = sm_description["register_count"]
+    opcode_start = sm_description["opcode_start"]
+
+    # FIXME: Terrible I know
+    register_bits_count = len(bin(register_count)) - 2
+
+    max_bits = opcode_start - register_bits_count
+    target_index = register_part["index"]
+
+    # We do not want to hit RZ
+    register_value = register_count - 1
+    expected_string_name = f"R{register_value}"
+
+    for bit_index in range(max_bits):
+        instruction = instruction_value | register_value << bit_index
+
+        (success, result) = test_instruction(file_name, sm_version, instruction)
+
+        if success:
+            (_, raw_instruction, _) = result[1]
+
+            parsed_instruction = parse_disassembly(raw_instruction)
+
+            parsed_register = get_instruction_part_by_index(
+                parsed_instruction, target_index
+            )
+
+            if (
+                parsed_register is not None
+                and parsed_register["type"] == register_part["type"]
+                and parsed_register["value"] == expected_string_name
+            ):
+                return {
+                    "index": parsed_register["index"],
+                    "type": parsed_register["type"],
+                    "bit_mask": register_count << bit_index,
+                }
+
+    return None
+
+
 def custom(input_argument: str, output_file: str, threads_count: int):
-    sm_desc = get_sm_desc("SM53")
+    sm_version = "SM53"
+    sm_desc = get_sm_desc(sm_version)
 
     assert sm_desc is not None
 
@@ -511,16 +572,33 @@ def custom(input_argument: str, output_file: str, threads_count: int):
                 instruction_definition["disassembly"]
             )
 
+            mnemonic = get_instruction_part_by_type(parsed_instruction, "mnemonic")
+            print(mnemonic)
+
+            fields = []
+
+            for parsed_part in parsed_instruction:
+                if parsed_part["type"] == "register":
+                    output = search_register_bits(
+                        file_name,
+                        instruction_definition["value"],
+                        parsed_part,
+                        sm_version,
+                    )
+
+                    if output is not None:
+                        fields.append(output)
+
             result.append(
                 {
                     "opcode": instruction_definition["value"],
+                    "mnemonic": mnemonic["value"],
                     "disassembly": instruction_definition["disassembly"],
-                    "parsed_instruction": parsed_instruction,
+                    "fields": fields,
                 }
             )
 
-        if result is not None:
-            new_definition[instruction] = result
+        new_definition[instruction] = result
 
     with open(output_file, "w") as f:
         f.write(json.dumps(new_definition, indent=4))
