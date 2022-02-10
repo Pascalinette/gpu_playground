@@ -152,6 +152,15 @@ def parse_instruction_name(instruction_raw: str) -> str:
     return instruction
 
 
+def split_instruction(instruction_raw: str) -> List[str]:
+    raw_inst_components = instruction_raw.split(" ")
+
+    # Remove usual final semicolon
+    raw_inst_components[-1] = raw_inst_components[-1][0:-1]
+
+    return raw_inst_components
+
+
 def execute_disassembler(
     sm_version: str, path: str
 ) -> Tuple[bool, Union[str, List[Tuple[int, str, int]]]]:
@@ -305,8 +314,8 @@ def generate_base_definition(output_file: str, sm_version: str, threads_count: i
             raw_definition[key].extend(entry[key])
 
     for instruction in raw_definition:
-        result = dumb__instruction_deduplicate(
-            file_name, instruction, raw_definition[instruction]
+        result = dumb_instruction_deduplicate(
+            file_name, instruction, raw_definition[instruction], sm_version
         )
         if result is not None:
             raw_definition[instruction] = result
@@ -335,8 +344,8 @@ def bit_diff(a: int, b: int, bits_len: int = 64) -> List[Tuple[int, int, int]]:
 
 
 # TODO: group by disassembly result and do bit flipping according to that (to avoid possibly loosing mirrors)
-def dumb__instruction_deduplicate(
-    file_name: str, instruction_name: str, data: list
+def dumb_instruction_deduplicate(
+    file_name: str, instruction_name: str, data: list, sm_version: str
 ) -> Optional[list]:
     # If there is only one variant, no deduplication needed
     if len(data) == 1:
@@ -364,7 +373,7 @@ def dumb__instruction_deduplicate(
 
     if cleared_instruction_value != first_instruction_entry_value:
         (instruction_valid, raw_output) = test_instruction(
-            file_name, "SM53", cleared_instruction_value
+            file_name, sm_version, cleared_instruction_value
         )
 
         if not instruction_valid:
@@ -382,11 +391,139 @@ def dumb__instruction_deduplicate(
         return [first_instruction_entry]
 
 
+def get_instruction_argument_type(raw_part: str) -> str:
+    data_type = "unknown"
+    start_index = 0
+
+    if raw_part[0] == "-":
+        start_index = 1
+
+    if raw_part[start_index] == "R":
+        if raw_part.find("+") != -1:
+            data_type = "register_with_immediate_integer"
+        else:
+            data_type = "register"
+    if raw_part[0] == "P":
+        data_type = "predicate_register"
+    elif raw_part[start_index : start_index + 2] == "0x":
+        data_type = "immediate_integer"
+    elif raw_part[start_index : start_index + 2] == "c[":
+        data_type = "const_memory_addr"
+    elif raw_part[start_index : start_index + 2] == "a[":
+        data_type = "attribute"
+    elif raw_part[start_index] == "[" and raw_part[-1] == "]":
+        sub_part = get_instruction_argument_type(raw_part[start_index + 1 : -1])
+
+        if sub_part != "unknown":
+            data_type = "memory_address_from_" + sub_part
+    elif raw_part[start_index] == "|" and raw_part[-1] == "|":
+        sub_part = get_instruction_argument_type(raw_part[start_index + 1 : -1])
+
+        if sub_part != "unknown":
+            data_type = "absolute_value_from_" + sub_part
+    # TODO: do something about .NEG syntax???
+    else:
+        # Attempt parsing as integer
+        try:
+            int(raw_part)
+
+            data_type = "immediate_integer"
+        except ValueError:
+            # if not valid, attempt parsing as float
+            try:
+                float(raw_part)
+
+                data_type = "immediate_float"
+            except ValueError:
+                pass
+
+    return data_type
+
+
+def parse_disassembly(disassembly: str) -> list:
+    result = []
+
+    instruction_split = split_instruction(disassembly)
+
+    skip_index = 0
+
+    if instruction_split[0][0] == "@":
+        result.append(
+            {"index": 0, "type": "cond_predicate", "value": instruction_split[0][1:]}
+        )
+        skip_index = 1
+
+    instruction_split = instruction_split[skip_index:]
+
+    result.append(
+        {"index": skip_index, "type": "mnemonic", "value": instruction_split[0]}
+    )
+
+    instruction_split = instruction_split[1:]
+
+    for raw_part_index in range(len(instruction_split)):
+        raw_part = instruction_split[raw_part_index]
+
+        if len(raw_part) == 0 or (len(raw_part) == 1 and raw_part[0] == ","):
+            continue
+
+        if raw_part[-1] == ",":
+            raw_part = raw_part[0:-1]
+
+        data_type = get_instruction_argument_type(raw_part)
+
+        data = {
+            "index": skip_index + raw_part_index,
+            "type": data_type,
+            "value": raw_part,
+        }
+
+        if data["type"] == "unknown":
+            pass
+            print(disassembly)
+            print(data)
+
+            # raise Exception((data, disassembly))
+
+        result.append(data)
+
+    return result
+
+
 def custom(input_argument: str, output_file: str, threads_count: int):
+    sm_desc = get_sm_desc("SM53")
+
+    assert sm_desc is not None
+
     (fd, file_name) = tempfile.mkstemp()
     os.close(fd)
 
-    print(test_instruction(file_name, "SM53", int(input_argument[2:], 16)))
+    with open(input_argument, "r") as f:
+        raw_definition = json.loads(f.read())
+
+    new_definition = {}
+
+    for instruction in raw_definition:
+        result = []
+
+        for instruction_definition in raw_definition[instruction]:
+            parsed_instruction = parse_disassembly(
+                instruction_definition["disassembly"]
+            )
+
+            result.append(
+                {
+                    "opcode": instruction_definition["value"],
+                    "disassembly": instruction_definition["disassembly"],
+                    "parsed_instruction": parsed_instruction,
+                }
+            )
+
+        if result is not None:
+            new_definition[instruction] = result
+
+    with open(output_file, "w") as f:
+        f.write(json.dumps(new_definition, indent=4))
 
     os.unlink(file_name)
     sys.exit(0)
