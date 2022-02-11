@@ -294,10 +294,21 @@ def generate_base_definition(output_file: str, sm_version: str, threads_count: i
 
             raw_definition[key].extend(entry[key])
 
+    # Ensure all instructions entries are sorted
+    for instruction in raw_definition:
+        raw_definition[instruction] = sorted(
+            raw_definition[instruction], key=lambda entry: entry["value"]
+        )
+
     for instruction in raw_definition:
         result = dumb_instruction_deduplicate(
             file_name, instruction, raw_definition[instruction], sm_version
         )
+        if result is not None:
+            raw_definition[instruction] = result
+
+    for instruction in raw_definition:
+        result = instruction_deduplicate_arguments(raw_definition[instruction])
         if result is not None:
             raw_definition[instruction] = result
 
@@ -370,6 +381,70 @@ def dumb_instruction_deduplicate(
         return [create_instruction_entry(raw_instruction, cleared_instruction_value)]
     else:
         return [first_instruction_entry]
+
+
+def diff_parsed_instruction_by_part(a: List[dict], b: List[dict], key: str) -> bool:
+    if len(a) != len(b):
+        return False
+
+    for index in range(len(a)):
+        if a[index][key] != b[index][key]:
+            return False
+
+    return True
+
+
+def instruction_deduplicate_arguments(data: list) -> Optional[list]:
+    # If there is only one variant, no deduplication needed
+    if len(data) == 1:
+        return None
+
+    result = []
+
+    already_scanned = []
+
+    for a_instruction_entry_index in range(len(data)):
+        a_instruction_entry_parsed = parse_disassembly(
+            data[a_instruction_entry_index]["disassembly"]
+        )
+        a_mnemonic_entry = get_instruction_part_by_type(
+            a_instruction_entry_parsed, "mnemonic"
+        )
+
+        if a_mnemonic_entry["value"] in already_scanned:
+            continue
+
+        temp_list = []
+        is_valid = True
+
+        for b_instruction_entry_index in range(
+            a_instruction_entry_index + 1, len(data)
+        ):
+            b_instruction_entry_parsed = parse_disassembly(
+                data[b_instruction_entry_index]["disassembly"]
+            )
+            b_mnemonic_entry = get_instruction_part_by_type(
+                b_instruction_entry_parsed, "mnemonic"
+            )
+
+            if a_mnemonic_entry["value"] == b_mnemonic_entry["value"]:
+                temp_list.append(data[b_instruction_entry_index])
+
+                if not diff_parsed_instruction_by_part(
+                    a_instruction_entry_parsed, b_instruction_entry_parsed, "type"
+                ):
+                    is_valid = False
+                    break
+
+        result.append(data[a_instruction_entry_index])
+
+        if not is_valid:
+            # Add back normal stuffs
+            result.extend(temp_list)
+
+        already_scanned.append(a_mnemonic_entry["value"])
+
+    return result
 
 
 def get_instruction_argument_type(raw_part: str) -> str:
