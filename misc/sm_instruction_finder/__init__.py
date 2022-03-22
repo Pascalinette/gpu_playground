@@ -169,10 +169,12 @@ def test_instruction(
     return result
 
 
-def create_instruction_entry(disassembly: str, value: int) -> dict:
+def create_instruction_entry(disassembly: str, value: int, mnemonic: str) -> dict:
     return {
         "disassembly": disassembly,
         "value": value,
+        "mnemonic": mnemonic,
+        "fields": []
     }
 
 
@@ -210,13 +212,13 @@ def fuzz_instruction_range(
             if success:
                 (_, raw_instruction, _) = result[1]
 
-                instruction_name = parse_instruction_name(raw_instruction)
+                (instruction_name, instruction_name_with_modifiers) = parse_instruction_name(raw_instruction)
 
                 if not instruction_name in result_dict:
                     result_dict[instruction_name] = list()
 
                 result_dict[instruction_name].append(
-                    create_instruction_entry(raw_instruction, instruction)
+                    create_instruction_entry(raw_instruction, instruction, instruction_name_with_modifiers)
                 )
                 # print(f"{thread_id}: {instruction:064b}: SUCCESS ({instruction_name})")
 
@@ -373,12 +375,12 @@ def dumb_instruction_deduplicate(
 
         (_, raw_instruction, _) = raw_output[1]
 
-        generated_instruction_name = parse_instruction_name(raw_instruction)
+        (generated_instruction_name, instruction_name_with_modifiers) = parse_instruction_name(raw_instruction)
 
         if generated_instruction_name != instruction_name:
             return None
 
-        return [create_instruction_entry(raw_instruction, cleared_instruction_value)]
+        return [create_instruction_entry(raw_instruction, cleared_instruction_value, instruction_name_with_modifiers)]
     else:
         return [first_instruction_entry]
 
@@ -566,7 +568,7 @@ def get_instruction_part_by_index(
     return None
 
 
-def parse_instruction_name(instruction_raw: str) -> str:
+def parse_instruction_name(instruction_raw: str) -> Tuple[str, str]:
     parsed_instruction = parse_disassembly(instruction_raw)
 
     instruction_with_modifiers_def = parsed_instruction[0]
@@ -577,11 +579,11 @@ def parse_instruction_name(instruction_raw: str) -> str:
     # Finally only grab the base name
     instruction = instruction_with_modifiers_def["value"].split(".")[0]
 
-    return instruction
+    return (instruction, instruction_with_modifiers_def["value"])
 
 
 def search_register_bits(
-    file_name: str, instruction_value: int, register_part: dict, sm_version: str
+    file_name: str, instruction_definition: dict, register_part: dict, sm_version: str
 ) -> Optional[dict]:
     sm_description = get_sm_desc(sm_version)
     register_count = sm_description["register_count"]
@@ -596,6 +598,8 @@ def search_register_bits(
     # We do not want to hit RZ
     register_value = register_count - 1
     expected_string_name = f"R{register_value}"
+
+    instruction_value = instruction_definition['value']
 
     for bit_index in range(max_bits):
         instruction = instruction_value | register_value << bit_index
@@ -620,6 +624,7 @@ def search_register_bits(
                     "index": parsed_register["index"],
                     "type": parsed_register["type"],
                     "bit_mask": register_count << bit_index,
+                    "is_discovered": True
                 }
 
     return None
@@ -653,17 +658,34 @@ def custom(input_argument: str, output_file: str, threads_count: int):
             fields = []
 
             for parsed_part in parsed_instruction:
-                if parsed_part["type"] == "register":
+                if parsed_part["type"] == "mnemonic":
+                    pass
+                elif parsed_part["type"] == "register":
                     output = search_register_bits(
                         file_name,
-                        instruction_definition["value"],
+                        instruction_definition,
                         parsed_part,
                         sm_version,
                     )
 
                     if output is not None:
                         fields.append(output)
+                    else:
+                        fields.append({
+                            "index": parsed_part["index"],
+                            "type": parsed_part["type"],
+                            "bit_mask": 0,
+                            "is_discovered": False
+                        })
+                else:
+                    fields.append({
+                        "index": parsed_part["index"],
+                        "type": parsed_part["type"],
+                        "bit_mask": 0,
+                        "is_discovered": False
+                    })
 
+            instruction_definition['fields'] = fields
             result.append(
                 {
                     "opcode": instruction_definition["value"],
