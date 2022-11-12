@@ -365,11 +365,11 @@ class NouveauCard(DrmCard):
             buffers[buffer_index].write_domains = object.write_domain
             buffers[buffer_index].valid_domains = object.valid_domain
 
-            if type(buffer_object) is NouveauPushbufCommandBuffer:
+            if type(object) is NouveauPushbufCommandBuffer:
                 push[push_index] = drm_nouveau_gem_pushbuf_push()
                 push[push_index].bo_index = buffer_index
-                push[push_index].offset = buffer_object.offset
-                push[push_index].length = buffer_object.size
+                push[push_index].offset = object.offset
+                push[push_index].length = object.size
                 push_index += 1
 
         req.channel = channel.channel_id
@@ -462,7 +462,6 @@ class NouveauChannel(object):
 
         check_result(drm_nouveau_channel_free(self.card.fd, req), None)
 
-
 class NouveauSubmittedCommandBuffer(SubmittedCommandBufferBase):
     dummy_memory: NouveauBufferMappable
 
@@ -537,7 +536,7 @@ class NouveauGpuChannel(object):
             memory[0 : len(command_buffer.buffer)] = command_buffer.buffer
 
             command_buffer_memory_list.append(memory)
-            buffers.append(NouveauPushbuf(memory, memory.domain, memory.domain, 0))
+            buffers.append(NouveauPushbufCommandBuffer(memory, memory.domain, memory.domain, 0, 0, memory.gpu_memory_size))
 
             dummy_memory = self.create_gpu_memory(1)
             dummy_buffer_memory_list.append(dummy_memory)
@@ -564,5 +563,6 @@ class NouveauGpuChannel(object):
         self,
         command_buffer: CommandBuffer,
         external_wait: Optional[SubmittedCommandBufferBase] = None,
+        buffer_deps: Optional[List[NouveauPushbuf]] = None,
     ) -> NouveauSubmittedCommandBuffer:
-        return self.submit_commands([command_buffer], external_wait)[0]
+        return self.submit_commands([command_buffer], external_wait, buffer_deps)[0]

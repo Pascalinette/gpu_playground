@@ -1,3 +1,4 @@
+from ctypes import create_string_buffer
 from typing import Dict, Optional
 from drm_header import *
 from utils import BlockDevice
