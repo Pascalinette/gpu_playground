@@ -1,9 +1,6 @@
 from command_buffer import *
-from nvgpu import GpuMemory, align_up
 from maxwell.hw import *
 from maxwell.hw.dma_copy_a import *
-
-import typing
 
 MAX_LINEAR_COPY_SIZE = 0x3FFFFF
 

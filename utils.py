@@ -1,5 +1,14 @@
-from ctypes import sizeof
-from typing import Any
+from ctypes import CDLL, addressof, c_int, POINTER, c_ubyte, memmove, sizeof
+import errno
+from os import close
+import os
+from typing import Any, Optional
+
+
+libc = CDLL("libc.so.6")
+get_errno_loc = libc.__errno_location
+get_errno_loc.restype = POINTER(c_int)
+
 
 _IOC_NRBITS = 8
 _IOC_TYPEBITS = 8
@@ -89,5 +98,86 @@ def IOC_NR(nr: int) -> int:
 def IOC_SIZE(nr: int) -> int:
     return (nr >> _IOC_SIZESHIFT) & _IOC_SIZEMASK
 
+
 def set_bits(offset: int, size: int, value: int) -> int:
-    return ((value & ((1 << (size + 1)) - 1)) << offset)
+    return (value & ((1 << (size + 1)) - 1)) << offset
+
+
+def align_up(value: int, size: int) -> int:
+    return (value + (size - 1)) & -size
+
+
+def align_down(value: int, size: int) -> int:
+    return value & -size
+
+
+def get_errno() -> int:
+    return get_errno_loc()[0]
+
+
+class ErrnoException(Exception):
+    """Raised when an errno is returned"""
+
+    error: int
+    message: Optional[str]
+
+    def __init__(self, error: int) -> None:
+        self.error = error
+
+        if error in errno.errorcode:
+            self.message = errno.errorcode[error]
+        else:
+            self.message = f"Unknown errno {error}"
+
+        super().__init__(error)
+
+
+def get_errno_code() -> Optional[str]:
+    error = get_errno()
+
+    if error != 0:
+        return errno.errorcode[error]
+
+    return None
+
+
+def check_result(result_code: int, output_value: Any = None) -> Any:
+    if result_code >= 0:
+        return output_value
+
+    exception = ErrnoException(get_errno())
+    print(exception.message)
+
+    raise exception
+
+
+class BlockDevice(object):
+    fd: int
+
+    def __init__(self, path: Optional[str] = None, fd: int = -1) -> None:
+        if fd != -1:
+            self.fd = fd
+        elif path is not None:
+            self.fd = os.open(path, os.O_RDWR | os.O_CLOEXEC)
+        else:
+            raise Exception("INVALID COMBINAISON")
+
+    def close(self) -> None:
+        close(self.fd)
+
+    def check_result(self, result_code: int, output_value: Any = None) -> Any:
+        return check_result(result_code, output_value)
+
+
+def ctypes_struct_to_bytearray(struct: Any) -> bytearray:
+    raw_buff = (c_ubyte * sizeof(struct))()
+
+    memmove(raw_buff, addressof(struct), sizeof(struct))
+
+    return bytearray(raw_buff)
+
+
+def bytearray_to_ctypes_struct(struct: Any, buff: bytearray):
+    raw_buff = (c_ubyte * sizeof(struct)).from_buffer(buff)
+
+    memmove(addressof(struct), raw_buff, sizeof(struct))

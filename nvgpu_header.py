@@ -5,7 +5,7 @@ from ctypes import *
 from utils import *
 
 
-libc = CDLL('libc.so.6')
+libc = CDLL("libc.so.6")
 ioctl = libc.ioctl
 NVGPU_GPU_IOCTL_MAGIC: int = 0x47
 NVGPU_ZBC_COLOR_VALUE_SIZE: int = 0x4
@@ -246,10 +246,6 @@ NVGPU_SCHED_STATUS_TSG_OPEN: int = 0x1
 NVGPU_SCHED_API_VERSION: int = 0x1
 
 
-
-
-
-
 class nvgpu_gpu_zcull_get_ctx_size_args(Structure):
     _pack_ = 1
     _fields_ = [
@@ -379,7 +375,9 @@ class nvgpu_gpu_prepare_compressible_read_args_unamed_union_1(Union):
     ]
 
 
-class nvgpu_gpu_prepare_compressible_read_args_unamed_union_9_unamed_struct_0(Structure):
+class nvgpu_gpu_prepare_compressible_read_args_unamed_union_9_unamed_struct_0(
+    Structure
+):
     _fields_ = [
         ("syncpt_id", c_uint),
         ("syncpt_value", c_uint),
@@ -388,7 +386,10 @@ class nvgpu_gpu_prepare_compressible_read_args_unamed_union_9_unamed_struct_0(St
 
 class nvgpu_gpu_prepare_compressible_read_args_unamed_union_9(Union):
     _fields_ = [
-        ("unamed_field0", nvgpu_gpu_prepare_compressible_read_args_unamed_union_9_unamed_struct_0),
+        (
+            "unamed_field0",
+            nvgpu_gpu_prepare_compressible_read_args_unamed_union_9_unamed_struct_0,
+        ),
         ("fd", c_int),
     ]
 
@@ -1500,8 +1501,12 @@ NVGPU_GPU_IOCTL_ZCULL_GET_INFO = IOR(71, 2, nvgpu_gpu_zcull_get_info_args)
 NVGPU_GPU_IOCTL_ZBC_SET_TABLE = IOW(71, 3, nvgpu_gpu_zbc_set_table_args)
 NVGPU_GPU_IOCTL_ZBC_QUERY_TABLE = IOWR(71, 4, nvgpu_gpu_zbc_query_table_args)
 NVGPU_GPU_IOCTL_GET_CHARACTERISTICS = IOWR(71, 5, nvgpu_gpu_get_characteristics)
-NVGPU_GPU_IOCTL_PREPARE_COMPRESSIBLE_READ = IOWR(71, 6, nvgpu_gpu_prepare_compressible_read_args)
-NVGPU_GPU_IOCTL_MARK_COMPRESSIBLE_WRITE = IOWR(71, 7, nvgpu_gpu_mark_compressible_write_args)
+NVGPU_GPU_IOCTL_PREPARE_COMPRESSIBLE_READ = IOWR(
+    71, 6, nvgpu_gpu_prepare_compressible_read_args
+)
+NVGPU_GPU_IOCTL_MARK_COMPRESSIBLE_WRITE = IOWR(
+    71, 7, nvgpu_gpu_mark_compressible_write_args
+)
 NVGPU_GPU_IOCTL_ALLOC_AS = IOWR(71, 8, nvgpu_alloc_as_args)
 NVGPU_GPU_IOCTL_OPEN_TSG = IOWR(71, 9, nvgpu_gpu_open_tsg_args)
 NVGPU_GPU_IOCTL_GET_TPC_MASKS = IOWR(71, 10, nvgpu_gpu_get_tpc_masks_args)
@@ -1510,10 +1515,14 @@ NVGPU_GPU_IOCTL_FLUSH_L2 = IOWR(71, 12, nvgpu_gpu_l2_fb_args)
 NVGPU_GPU_IOCTL_SET_MMUDEBUG_MODE = IOWR(71, 14, nvgpu_gpu_mmu_debug_mode_args)
 NVGPU_GPU_IOCTL_SET_SM_DEBUG_MODE = IOWR(71, 15, nvgpu_gpu_sm_debug_mode_args)
 NVGPU_GPU_IOCTL_WAIT_FOR_PAUSE = IOWR(71, 16, nvgpu_gpu_wait_pause_args)
-NVGPU_GPU_IOCTL_GET_TPC_EXCEPTION_EN_STATUS = IOWR(71, 17, nvgpu_gpu_tpc_exception_en_status_args)
+NVGPU_GPU_IOCTL_GET_TPC_EXCEPTION_EN_STATUS = IOWR(
+    71, 17, nvgpu_gpu_tpc_exception_en_status_args
+)
 NVGPU_GPU_IOCTL_NUM_VSMS = IOWR(71, 18, nvgpu_gpu_num_vsms)
 NVGPU_GPU_IOCTL_VSMS_MAPPING = IOWR(71, 19, nvgpu_gpu_vsms_mapping)
-NVGPU_GPU_IOCTL_GET_CPU_TIME_CORRELATION_INFO = IOWR(71, 24, nvgpu_gpu_get_cpu_time_correlation_info_args)
+NVGPU_GPU_IOCTL_GET_CPU_TIME_CORRELATION_INFO = IOWR(
+    71, 24, nvgpu_gpu_get_cpu_time_correlation_info_args
+)
 NVGPU_GPU_IOCTL_GET_GPU_TIME = IOWR(71, 25, nvgpu_gpu_get_gpu_time_args)
 NVGPU_GPU_IOCTL_GET_ENGINE_INFO = IOWR(71, 26, nvgpu_gpu_get_engine_info_args)
 NVGPU_GPU_IOCTL_ALLOC_VIDMEM = IOWR(71, 27, nvgpu_gpu_alloc_vidmem_args)
@@ -1528,40 +1537,64 @@ NVGPU_GPU_IOCTL_GET_CURRENT = IOWR(71, 35, nvgpu_gpu_get_current_args)
 NVGPU_GPU_IOCTL_GET_POWER = IOWR(71, 36, nvgpu_gpu_get_power_args)
 NVGPU_GPU_IOCTL_GET_TEMPERATURE = IOWR(71, 37, nvgpu_gpu_get_temperature_args)
 NVGPU_GPU_IOCTL_GET_FBP_L2_MASKS = IOWR(71, 38, nvgpu_gpu_get_fbp_l2_masks_args)
-NVGPU_GPU_IOCTL_SET_THERM_ALERT_LIMIT = IOWR(71, 39, nvgpu_gpu_set_therm_alert_limit_args)
-NVGPU_GPU_IOCTL_SET_DETERMINISTIC_OPTS = IOWR(71, 40, nvgpu_gpu_set_deterministic_opts_args)
+NVGPU_GPU_IOCTL_SET_THERM_ALERT_LIMIT = IOWR(
+    71, 39, nvgpu_gpu_set_therm_alert_limit_args
+)
+NVGPU_GPU_IOCTL_SET_DETERMINISTIC_OPTS = IOWR(
+    71, 40, nvgpu_gpu_set_deterministic_opts_args
+)
 NVGPU_EVENT_IOCTL_SET_FILTER = IOW(69, 1, nvgpu_gpu_set_event_filter_args)
 NVGPU_IOCTL_TSG_EVENT_ID_CTRL = IOWR(84, 7, nvgpu_event_id_ctrl_args)
 NVGPU_IOCTL_TSG_SET_RUNLIST_INTERLEAVE = IOW(84, 8, nvgpu_runlist_interleave_args)
 NVGPU_IOCTL_TSG_SET_TIMESLICE = IOW(84, 9, nvgpu_timeslice_args)
 NVGPU_IOCTL_TSG_GET_TIMESLICE = IOR(84, 10, nvgpu_timeslice_args)
 NVGPU_TSG_IOCTL_BIND_CHANNEL_EX = IOWR(84, 11, nvgpu_tsg_bind_channel_ex_args)
-NVGPU_TSG_IOCTL_READ_SINGLE_SM_ERROR_STATE = IOWR(84, 12, nvgpu_tsg_read_single_sm_error_state_args)
+NVGPU_TSG_IOCTL_READ_SINGLE_SM_ERROR_STATE = IOWR(
+    84, 12, nvgpu_tsg_read_single_sm_error_state_args
+)
 NVGPU_DBG_GPU_IOCTL_BIND_CHANNEL = IOWR(68, 1, nvgpu_dbg_gpu_bind_channel_args)
 NVGPU_DBG_GPU_IOCTL_REG_OPS = IOWR(68, 2, nvgpu_dbg_gpu_exec_reg_ops_args)
 NVGPU_DBG_GPU_IOCTL_EVENTS_CTRL = IOWR(68, 3, nvgpu_dbg_gpu_events_ctrl_args)
 NVGPU_DBG_GPU_IOCTL_POWERGATE = IOWR(68, 4, nvgpu_dbg_gpu_powergate_args)
 NVGPU_DBG_GPU_IOCTL_SMPC_CTXSW_MODE = IOWR(68, 5, nvgpu_dbg_gpu_smpc_ctxsw_mode_args)
-NVGPU_DBG_GPU_IOCTL_SUSPEND_RESUME_ALL_SMS = IOWR(68, 6, nvgpu_dbg_gpu_suspend_resume_all_sms_args)
+NVGPU_DBG_GPU_IOCTL_SUSPEND_RESUME_ALL_SMS = IOWR(
+    68, 6, nvgpu_dbg_gpu_suspend_resume_all_sms_args
+)
 NVGPU_DBG_GPU_IOCTL_PERFBUF_MAP = IOWR(68, 7, nvgpu_dbg_gpu_perfbuf_map_args)
 NVGPU_DBG_GPU_IOCTL_PERFBUF_UNMAP = IOWR(68, 8, nvgpu_dbg_gpu_perfbuf_unmap_args)
 NVGPU_DBG_GPU_IOCTL_PC_SAMPLING = IOW(68, 9, nvgpu_dbg_gpu_pc_sampling_args)
 NVGPU_DBG_GPU_IOCTL_TIMEOUT = IOW(68, 10, nvgpu_dbg_gpu_timeout_args)
 NVGPU_DBG_GPU_IOCTL_GET_TIMEOUT = IOR(68, 11, nvgpu_dbg_gpu_timeout_args)
-NVGPU_DBG_GPU_IOCTL_SET_NEXT_STOP_TRIGGER_TYPE = IOWR(68, 12, nvgpu_dbg_gpu_set_next_stop_trigger_type_args)
+NVGPU_DBG_GPU_IOCTL_SET_NEXT_STOP_TRIGGER_TYPE = IOWR(
+    68, 12, nvgpu_dbg_gpu_set_next_stop_trigger_type_args
+)
 NVGPU_DBG_GPU_IOCTL_HWPM_CTXSW_MODE = IOWR(68, 13, nvgpu_dbg_gpu_hwpm_ctxsw_mode_args)
-NVGPU_DBG_GPU_IOCTL_READ_SINGLE_SM_ERROR_STATE = IOWR(68, 14, nvgpu_dbg_gpu_read_single_sm_error_state_args)
-NVGPU_DBG_GPU_IOCTL_CLEAR_SINGLE_SM_ERROR_STATE = IOW(68, 15, nvgpu_dbg_gpu_clear_single_sm_error_state_args)
+NVGPU_DBG_GPU_IOCTL_READ_SINGLE_SM_ERROR_STATE = IOWR(
+    68, 14, nvgpu_dbg_gpu_read_single_sm_error_state_args
+)
+NVGPU_DBG_GPU_IOCTL_CLEAR_SINGLE_SM_ERROR_STATE = IOW(
+    68, 15, nvgpu_dbg_gpu_clear_single_sm_error_state_args
+)
 NVGPU_DBG_GPU_IOCTL_UNBIND_CHANNEL = IOW(68, 17, nvgpu_dbg_gpu_unbind_channel_args)
-NVGPU_DBG_GPU_IOCTL_SUSPEND_RESUME_CONTEXTS = IOWR(68, 18, nvgpu_dbg_gpu_suspend_resume_contexts_args)
+NVGPU_DBG_GPU_IOCTL_SUSPEND_RESUME_CONTEXTS = IOWR(
+    68, 18, nvgpu_dbg_gpu_suspend_resume_contexts_args
+)
 NVGPU_DBG_GPU_IOCTL_ACCESS_FB_MEMORY = IOWR(68, 19, nvgpu_dbg_gpu_access_fb_memory_args)
-NVGPU_DBG_GPU_IOCTL_PROFILER_ALLOCATE = IOWR(68, 20, nvgpu_dbg_gpu_profiler_obj_mgt_args)
+NVGPU_DBG_GPU_IOCTL_PROFILER_ALLOCATE = IOWR(
+    68, 20, nvgpu_dbg_gpu_profiler_obj_mgt_args
+)
 NVGPU_DBG_GPU_IOCTL_PROFILER_FREE = IOWR(68, 21, nvgpu_dbg_gpu_profiler_obj_mgt_args)
 NVGPU_DBG_GPU_IOCTL_PROFILER_RESERVE = IOWR(68, 22, nvgpu_dbg_gpu_profiler_reserve_args)
-NVGPU_DBG_GPU_IOCTL_SET_SM_EXCEPTION_TYPE_MASK = IOW(68, 23, nvgpu_dbg_gpu_set_sm_exception_type_mask_args)
+NVGPU_DBG_GPU_IOCTL_SET_SM_EXCEPTION_TYPE_MASK = IOW(
+    68, 23, nvgpu_dbg_gpu_set_sm_exception_type_mask_args
+)
 NVGPU_DBG_GPU_IOCTL_CYCLE_STATS = IOWR(68, 24, nvgpu_dbg_gpu_cycle_stats_args)
-NVGPU_DBG_GPU_IOCTL_CYCLE_STATS_SNAPSHOT = IOWR(68, 25, nvgpu_dbg_gpu_cycle_stats_snapshot_args)
-NVGPU_DBG_GPU_IOCTL_SET_CTX_MMU_DEBUG_MODE = IOW(68, 26, nvgpu_dbg_gpu_set_ctx_mmu_debug_mode_args)
+NVGPU_DBG_GPU_IOCTL_CYCLE_STATS_SNAPSHOT = IOWR(
+    68, 25, nvgpu_dbg_gpu_cycle_stats_snapshot_args
+)
+NVGPU_DBG_GPU_IOCTL_SET_CTX_MMU_DEBUG_MODE = IOW(
+    68, 26, nvgpu_dbg_gpu_set_ctx_mmu_debug_mode_args
+)
 NVGPU_IOCTL_CHANNEL_SET_NVMAP_FD = IOW(72, 5, nvgpu_set_nvmap_fd_args)
 NVGPU_IOCTL_CHANNEL_SET_TIMEOUT = IOW(72, 11, nvgpu_set_timeout_args)
 NVGPU_IOCTL_CHANNEL_GET_TIMEDOUT = IOR(72, 12, nvgpu_get_param_args)
@@ -1591,7 +1624,9 @@ NVGPU_AS_IOCTL_UNMAP_BUFFER = IOWR(65, 5, nvgpu_as_unmap_buffer_args)
 NVGPU_AS_IOCTL_ALLOC_SPACE = IOWR(65, 6, nvgpu_as_alloc_space_args)
 NVGPU_AS_IOCTL_MAP_BUFFER_EX = IOWR(65, 7, nvgpu_as_map_buffer_ex_args)
 NVGPU_AS_IOCTL_GET_VA_REGIONS = IOWR(65, 8, nvgpu_as_get_va_regions_args)
-NVGPU_AS_IOCTL_GET_BUFFER_COMPBITS_INFO = IOWR(65, 9, nvgpu_as_get_buffer_compbits_info_args)
+NVGPU_AS_IOCTL_GET_BUFFER_COMPBITS_INFO = IOWR(
+    65, 9, nvgpu_as_get_buffer_compbits_info_args
+)
 NVGPU_AS_IOCTL_MAP_BUFFER_COMPBITS = IOWR(65, 10, nvgpu_as_map_buffer_compbits_args)
 NVGPU_AS_IOCTL_MAP_BUFFER_BATCH = IOWR(65, 11, nvgpu_as_map_buffer_batch_args)
 NVGPU_AS_IOCTL_GET_SYNC_RO_MAP = IOR(65, 12, nvgpu_as_get_sync_ro_map_args)
@@ -1603,7 +1638,9 @@ NVGPU_SCHED_IOCTL_GET_RECENT_TSGS = IOWR(83, 2, nvgpu_sched_get_tsgs_args)
 NVGPU_SCHED_IOCTL_GET_TSGS_BY_PID = IOWR(83, 3, nvgpu_sched_get_tsgs_by_pid_args)
 NVGPU_SCHED_IOCTL_TSG_GET_PARAMS = IOWR(83, 4, nvgpu_sched_tsg_get_params_args)
 NVGPU_SCHED_IOCTL_TSG_SET_TIMESLICE = IOW(83, 5, nvgpu_sched_tsg_timeslice_args)
-NVGPU_SCHED_IOCTL_TSG_SET_RUNLIST_INTERLEAVE = IOW(83, 6, nvgpu_sched_tsg_runlist_interleave_args)
+NVGPU_SCHED_IOCTL_TSG_SET_RUNLIST_INTERLEAVE = IOW(
+    83, 6, nvgpu_sched_tsg_runlist_interleave_args
+)
 NVGPU_SCHED_IOCTL_GET_API_VERSION = IOR(83, 9, nvgpu_sched_api_version_args)
 NVGPU_SCHED_IOCTL_GET_TSG = IOW(83, 10, nvgpu_sched_tsg_refcount_args)
 NVGPU_SCHED_IOCTL_PUT_TSG = IOW(83, 11, nvgpu_sched_tsg_refcount_args)
@@ -1677,7 +1714,9 @@ def nvgpu_sched_ioctl_unlock_control(fd: Any) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_UNLOCK_CONTROL)
 
 
-def nvgpu_gpu_ioctl_zcull_get_ctx_size(fd: Any, arg: nvgpu_gpu_zcull_get_ctx_size_args) -> int:
+def nvgpu_gpu_ioctl_zcull_get_ctx_size(
+    fd: Any, arg: nvgpu_gpu_zcull_get_ctx_size_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_ZCULL_GET_CTX_SIZE, pointer(arg))
 
 
@@ -1689,19 +1728,27 @@ def nvgpu_gpu_ioctl_zbc_set_table(fd: Any, arg: nvgpu_gpu_zbc_set_table_args) ->
     return ioctl(fd, NVGPU_GPU_IOCTL_ZBC_SET_TABLE, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_zbc_query_table(fd: Any, arg: nvgpu_gpu_zbc_query_table_args) -> int:
+def nvgpu_gpu_ioctl_zbc_query_table(
+    fd: Any, arg: nvgpu_gpu_zbc_query_table_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_ZBC_QUERY_TABLE, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_characteristics(fd: Any, arg: nvgpu_gpu_get_characteristics) -> int:
+def nvgpu_gpu_ioctl_get_characteristics(
+    fd: Any, arg: nvgpu_gpu_get_characteristics
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_CHARACTERISTICS, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_prepare_compressible_read(fd: Any, arg: nvgpu_gpu_prepare_compressible_read_args) -> int:
+def nvgpu_gpu_ioctl_prepare_compressible_read(
+    fd: Any, arg: nvgpu_gpu_prepare_compressible_read_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_PREPARE_COMPRESSIBLE_READ, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_mark_compressible_write(fd: Any, arg: nvgpu_gpu_mark_compressible_write_args) -> int:
+def nvgpu_gpu_ioctl_mark_compressible_write(
+    fd: Any, arg: nvgpu_gpu_mark_compressible_write_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_MARK_COMPRESSIBLE_WRITE, pointer(arg))
 
 
@@ -1725,11 +1772,15 @@ def nvgpu_gpu_ioctl_flush_l2(fd: Any, arg: nvgpu_gpu_l2_fb_args) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_FLUSH_L2, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_set_mmudebug_mode(fd: Any, arg: nvgpu_gpu_mmu_debug_mode_args) -> int:
+def nvgpu_gpu_ioctl_set_mmudebug_mode(
+    fd: Any, arg: nvgpu_gpu_mmu_debug_mode_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_SET_MMUDEBUG_MODE, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_set_sm_debug_mode(fd: Any, arg: nvgpu_gpu_sm_debug_mode_args) -> int:
+def nvgpu_gpu_ioctl_set_sm_debug_mode(
+    fd: Any, arg: nvgpu_gpu_sm_debug_mode_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_SET_SM_DEBUG_MODE, pointer(arg))
 
 
@@ -1737,7 +1788,9 @@ def nvgpu_gpu_ioctl_wait_for_pause(fd: Any, arg: nvgpu_gpu_wait_pause_args) -> i
     return ioctl(fd, NVGPU_GPU_IOCTL_WAIT_FOR_PAUSE, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_tpc_exception_en_status(fd: Any, arg: nvgpu_gpu_tpc_exception_en_status_args) -> int:
+def nvgpu_gpu_ioctl_get_tpc_exception_en_status(
+    fd: Any, arg: nvgpu_gpu_tpc_exception_en_status_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_TPC_EXCEPTION_EN_STATUS, pointer(arg))
 
 
@@ -1749,7 +1802,9 @@ def nvgpu_gpu_ioctl_vsms_mapping(fd: Any, arg: nvgpu_gpu_vsms_mapping) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_VSMS_MAPPING, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_cpu_time_correlation_info(fd: Any, arg: nvgpu_gpu_get_cpu_time_correlation_info_args) -> int:
+def nvgpu_gpu_ioctl_get_cpu_time_correlation_info(
+    fd: Any, arg: nvgpu_gpu_get_cpu_time_correlation_info_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_CPU_TIME_CORRELATION_INFO, pointer(arg))
 
 
@@ -1757,7 +1812,9 @@ def nvgpu_gpu_ioctl_get_gpu_time(fd: Any, arg: nvgpu_gpu_get_gpu_time_args) -> i
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_GPU_TIME, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_engine_info(fd: Any, arg: nvgpu_gpu_get_engine_info_args) -> int:
+def nvgpu_gpu_ioctl_get_engine_info(
+    fd: Any, arg: nvgpu_gpu_get_engine_info_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_ENGINE_INFO, pointer(arg))
 
 
@@ -1769,7 +1826,9 @@ def nvgpu_gpu_ioctl_clk_get_range(fd: Any, arg: nvgpu_gpu_clk_range_args) -> int
     return ioctl(fd, NVGPU_GPU_IOCTL_CLK_GET_RANGE, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_clk_get_vf_points(fd: Any, arg: nvgpu_gpu_clk_vf_points_args) -> int:
+def nvgpu_gpu_ioctl_clk_get_vf_points(
+    fd: Any, arg: nvgpu_gpu_clk_vf_points_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_CLK_GET_VF_POINTS, pointer(arg))
 
 
@@ -1785,7 +1844,9 @@ def nvgpu_gpu_ioctl_get_event_fd(fd: Any, arg: nvgpu_gpu_get_event_fd_args) -> i
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_EVENT_FD, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_memory_state(fd: Any, arg: nvgpu_gpu_get_memory_state_args) -> int:
+def nvgpu_gpu_ioctl_get_memory_state(
+    fd: Any, arg: nvgpu_gpu_get_memory_state_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_MEMORY_STATE, pointer(arg))
 
 
@@ -1801,19 +1862,27 @@ def nvgpu_gpu_ioctl_get_power(fd: Any, arg: nvgpu_gpu_get_power_args) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_POWER, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_temperature(fd: Any, arg: nvgpu_gpu_get_temperature_args) -> int:
+def nvgpu_gpu_ioctl_get_temperature(
+    fd: Any, arg: nvgpu_gpu_get_temperature_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_TEMPERATURE, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_get_fbp_l2_masks(fd: Any, arg: nvgpu_gpu_get_fbp_l2_masks_args) -> int:
+def nvgpu_gpu_ioctl_get_fbp_l2_masks(
+    fd: Any, arg: nvgpu_gpu_get_fbp_l2_masks_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_GET_FBP_L2_MASKS, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_set_therm_alert_limit(fd: Any, arg: nvgpu_gpu_set_therm_alert_limit_args) -> int:
+def nvgpu_gpu_ioctl_set_therm_alert_limit(
+    fd: Any, arg: nvgpu_gpu_set_therm_alert_limit_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_SET_THERM_ALERT_LIMIT, pointer(arg))
 
 
-def nvgpu_gpu_ioctl_set_deterministic_opts(fd: Any, arg: nvgpu_gpu_set_deterministic_opts_args) -> int:
+def nvgpu_gpu_ioctl_set_deterministic_opts(
+    fd: Any, arg: nvgpu_gpu_set_deterministic_opts_args
+) -> int:
     return ioctl(fd, NVGPU_GPU_IOCTL_SET_DETERMINISTIC_OPTS, pointer(arg))
 
 
@@ -1825,7 +1894,9 @@ def nvgpu_ioctl_tsg_event_id_ctrl(fd: Any, arg: nvgpu_event_id_ctrl_args) -> int
     return ioctl(fd, NVGPU_IOCTL_TSG_EVENT_ID_CTRL, pointer(arg))
 
 
-def nvgpu_ioctl_tsg_set_runlist_interleave(fd: Any, arg: nvgpu_runlist_interleave_args) -> int:
+def nvgpu_ioctl_tsg_set_runlist_interleave(
+    fd: Any, arg: nvgpu_runlist_interleave_args
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_TSG_SET_RUNLIST_INTERLEAVE, pointer(arg))
 
 
@@ -1837,15 +1908,21 @@ def nvgpu_ioctl_tsg_get_timeslice(fd: Any, arg: nvgpu_timeslice_args) -> int:
     return ioctl(fd, NVGPU_IOCTL_TSG_GET_TIMESLICE, pointer(arg))
 
 
-def nvgpu_tsg_ioctl_bind_channel_ex(fd: Any, arg: nvgpu_tsg_bind_channel_ex_args) -> int:
+def nvgpu_tsg_ioctl_bind_channel_ex(
+    fd: Any, arg: nvgpu_tsg_bind_channel_ex_args
+) -> int:
     return ioctl(fd, NVGPU_TSG_IOCTL_BIND_CHANNEL_EX, pointer(arg))
 
 
-def nvgpu_tsg_ioctl_read_single_sm_error_state(fd: Any, arg: nvgpu_tsg_read_single_sm_error_state_args) -> int:
+def nvgpu_tsg_ioctl_read_single_sm_error_state(
+    fd: Any, arg: nvgpu_tsg_read_single_sm_error_state_args
+) -> int:
     return ioctl(fd, NVGPU_TSG_IOCTL_READ_SINGLE_SM_ERROR_STATE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_bind_channel(fd: Any, arg: nvgpu_dbg_gpu_bind_channel_args) -> int:
+def nvgpu_dbg_gpu_ioctl_bind_channel(
+    fd: Any, arg: nvgpu_dbg_gpu_bind_channel_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_BIND_CHANNEL, pointer(arg))
 
 
@@ -1853,7 +1930,9 @@ def nvgpu_dbg_gpu_ioctl_reg_ops(fd: Any, arg: nvgpu_dbg_gpu_exec_reg_ops_args) -
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_REG_OPS, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_events_ctrl(fd: Any, arg: nvgpu_dbg_gpu_events_ctrl_args) -> int:
+def nvgpu_dbg_gpu_ioctl_events_ctrl(
+    fd: Any, arg: nvgpu_dbg_gpu_events_ctrl_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_EVENTS_CTRL, pointer(arg))
 
 
@@ -1861,23 +1940,33 @@ def nvgpu_dbg_gpu_ioctl_powergate(fd: Any, arg: nvgpu_dbg_gpu_powergate_args) ->
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_POWERGATE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_smpc_ctxsw_mode(fd: Any, arg: nvgpu_dbg_gpu_smpc_ctxsw_mode_args) -> int:
+def nvgpu_dbg_gpu_ioctl_smpc_ctxsw_mode(
+    fd: Any, arg: nvgpu_dbg_gpu_smpc_ctxsw_mode_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_SMPC_CTXSW_MODE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_suspend_resume_all_sms(fd: Any, arg: nvgpu_dbg_gpu_suspend_resume_all_sms_args) -> int:
+def nvgpu_dbg_gpu_ioctl_suspend_resume_all_sms(
+    fd: Any, arg: nvgpu_dbg_gpu_suspend_resume_all_sms_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_SUSPEND_RESUME_ALL_SMS, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_perfbuf_map(fd: Any, arg: nvgpu_dbg_gpu_perfbuf_map_args) -> int:
+def nvgpu_dbg_gpu_ioctl_perfbuf_map(
+    fd: Any, arg: nvgpu_dbg_gpu_perfbuf_map_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_PERFBUF_MAP, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_perfbuf_unmap(fd: Any, arg: nvgpu_dbg_gpu_perfbuf_unmap_args) -> int:
+def nvgpu_dbg_gpu_ioctl_perfbuf_unmap(
+    fd: Any, arg: nvgpu_dbg_gpu_perfbuf_unmap_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_PERFBUF_UNMAP, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_pc_sampling(fd: Any, arg: nvgpu_dbg_gpu_pc_sampling_args) -> int:
+def nvgpu_dbg_gpu_ioctl_pc_sampling(
+    fd: Any, arg: nvgpu_dbg_gpu_pc_sampling_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_PC_SAMPLING, pointer(arg))
 
 
@@ -1889,59 +1978,87 @@ def nvgpu_dbg_gpu_ioctl_get_timeout(fd: Any, arg: nvgpu_dbg_gpu_timeout_args) ->
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_GET_TIMEOUT, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_set_next_stop_trigger_type(fd: Any, arg: nvgpu_dbg_gpu_set_next_stop_trigger_type_args) -> int:
+def nvgpu_dbg_gpu_ioctl_set_next_stop_trigger_type(
+    fd: Any, arg: nvgpu_dbg_gpu_set_next_stop_trigger_type_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_SET_NEXT_STOP_TRIGGER_TYPE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_hwpm_ctxsw_mode(fd: Any, arg: nvgpu_dbg_gpu_hwpm_ctxsw_mode_args) -> int:
+def nvgpu_dbg_gpu_ioctl_hwpm_ctxsw_mode(
+    fd: Any, arg: nvgpu_dbg_gpu_hwpm_ctxsw_mode_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_HWPM_CTXSW_MODE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_read_single_sm_error_state(fd: Any, arg: nvgpu_dbg_gpu_read_single_sm_error_state_args) -> int:
+def nvgpu_dbg_gpu_ioctl_read_single_sm_error_state(
+    fd: Any, arg: nvgpu_dbg_gpu_read_single_sm_error_state_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_READ_SINGLE_SM_ERROR_STATE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_clear_single_sm_error_state(fd: Any, arg: nvgpu_dbg_gpu_clear_single_sm_error_state_args) -> int:
+def nvgpu_dbg_gpu_ioctl_clear_single_sm_error_state(
+    fd: Any, arg: nvgpu_dbg_gpu_clear_single_sm_error_state_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_CLEAR_SINGLE_SM_ERROR_STATE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_unbind_channel(fd: Any, arg: nvgpu_dbg_gpu_unbind_channel_args) -> int:
+def nvgpu_dbg_gpu_ioctl_unbind_channel(
+    fd: Any, arg: nvgpu_dbg_gpu_unbind_channel_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_UNBIND_CHANNEL, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_suspend_resume_contexts(fd: Any, arg: nvgpu_dbg_gpu_suspend_resume_contexts_args) -> int:
+def nvgpu_dbg_gpu_ioctl_suspend_resume_contexts(
+    fd: Any, arg: nvgpu_dbg_gpu_suspend_resume_contexts_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_SUSPEND_RESUME_CONTEXTS, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_access_fb_memory(fd: Any, arg: nvgpu_dbg_gpu_access_fb_memory_args) -> int:
+def nvgpu_dbg_gpu_ioctl_access_fb_memory(
+    fd: Any, arg: nvgpu_dbg_gpu_access_fb_memory_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_ACCESS_FB_MEMORY, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_profiler_allocate(fd: Any, arg: nvgpu_dbg_gpu_profiler_obj_mgt_args) -> int:
+def nvgpu_dbg_gpu_ioctl_profiler_allocate(
+    fd: Any, arg: nvgpu_dbg_gpu_profiler_obj_mgt_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_PROFILER_ALLOCATE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_profiler_free(fd: Any, arg: nvgpu_dbg_gpu_profiler_obj_mgt_args) -> int:
+def nvgpu_dbg_gpu_ioctl_profiler_free(
+    fd: Any, arg: nvgpu_dbg_gpu_profiler_obj_mgt_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_PROFILER_FREE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_profiler_reserve(fd: Any, arg: nvgpu_dbg_gpu_profiler_reserve_args) -> int:
+def nvgpu_dbg_gpu_ioctl_profiler_reserve(
+    fd: Any, arg: nvgpu_dbg_gpu_profiler_reserve_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_PROFILER_RESERVE, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_set_sm_exception_type_mask(fd: Any, arg: nvgpu_dbg_gpu_set_sm_exception_type_mask_args) -> int:
+def nvgpu_dbg_gpu_ioctl_set_sm_exception_type_mask(
+    fd: Any, arg: nvgpu_dbg_gpu_set_sm_exception_type_mask_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_SET_SM_EXCEPTION_TYPE_MASK, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_cycle_stats(fd: Any, arg: nvgpu_dbg_gpu_cycle_stats_args) -> int:
+def nvgpu_dbg_gpu_ioctl_cycle_stats(
+    fd: Any, arg: nvgpu_dbg_gpu_cycle_stats_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_CYCLE_STATS, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_cycle_stats_snapshot(fd: Any, arg: nvgpu_dbg_gpu_cycle_stats_snapshot_args) -> int:
+def nvgpu_dbg_gpu_ioctl_cycle_stats_snapshot(
+    fd: Any, arg: nvgpu_dbg_gpu_cycle_stats_snapshot_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_CYCLE_STATS_SNAPSHOT, pointer(arg))
 
 
-def nvgpu_dbg_gpu_ioctl_set_ctx_mmu_debug_mode(fd: Any, arg: nvgpu_dbg_gpu_set_ctx_mmu_debug_mode_args) -> int:
+def nvgpu_dbg_gpu_ioctl_set_ctx_mmu_debug_mode(
+    fd: Any, arg: nvgpu_dbg_gpu_set_ctx_mmu_debug_mode_args
+) -> int:
     return ioctl(fd, NVGPU_DBG_GPU_IOCTL_SET_CTX_MMU_DEBUG_MODE, pointer(arg))
 
 
@@ -1981,7 +2098,9 @@ def nvgpu_ioctl_channel_zcull_bind(fd: Any, arg: nvgpu_zcull_bind_args) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_ZCULL_BIND, pointer(arg))
 
 
-def nvgpu_ioctl_channel_set_error_notifier(fd: Any, arg: nvgpu_set_error_notifier) -> int:
+def nvgpu_ioctl_channel_set_error_notifier(
+    fd: Any, arg: nvgpu_set_error_notifier
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_SET_ERROR_NOTIFIER, pointer(arg))
 
 
@@ -1997,7 +2116,9 @@ def nvgpu_ioctl_channel_wdt(fd: Any, arg: nvgpu_channel_wdt_args) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_WDT, pointer(arg))
 
 
-def nvgpu_ioctl_channel_set_runlist_interleave(fd: Any, arg: nvgpu_runlist_interleave_args) -> int:
+def nvgpu_ioctl_channel_set_runlist_interleave(
+    fd: Any, arg: nvgpu_runlist_interleave_args
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_SET_RUNLIST_INTERLEAVE, pointer(arg))
 
 
@@ -2005,11 +2126,15 @@ def nvgpu_ioctl_channel_set_timeslice(fd: Any, arg: nvgpu_timeslice_args) -> int
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_SET_TIMESLICE, pointer(arg))
 
 
-def nvgpu_ioctl_channel_set_preemption_mode(fd: Any, arg: nvgpu_preemption_mode_args) -> int:
+def nvgpu_ioctl_channel_set_preemption_mode(
+    fd: Any, arg: nvgpu_preemption_mode_args
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_SET_PREEMPTION_MODE, pointer(arg))
 
 
-def nvgpu_ioctl_channel_alloc_gpfifo_ex(fd: Any, arg: nvgpu_alloc_gpfifo_ex_args) -> int:
+def nvgpu_ioctl_channel_alloc_gpfifo_ex(
+    fd: Any, arg: nvgpu_alloc_gpfifo_ex_args
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_ALLOC_GPFIFO_EX, pointer(arg))
 
 
@@ -2021,11 +2146,15 @@ def nvgpu_ioctl_channel_get_timeslice(fd: Any, arg: nvgpu_timeslice_args) -> int
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_GET_TIMESLICE, pointer(arg))
 
 
-def nvgpu_ioctl_channel_get_user_syncpoint(fd: Any, arg: nvgpu_get_user_syncpoint_args) -> int:
+def nvgpu_ioctl_channel_get_user_syncpoint(
+    fd: Any, arg: nvgpu_get_user_syncpoint_args
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_GET_USER_SYNCPOINT, pointer(arg))
 
 
-def nvgpu_ioctl_channel_reschedule_runlist(fd: Any, arg: nvgpu_reschedule_runlist_args) -> int:
+def nvgpu_ioctl_channel_reschedule_runlist(
+    fd: Any, arg: nvgpu_reschedule_runlist_args
+) -> int:
     return ioctl(fd, NVGPU_IOCTL_CHANNEL_RESCHEDULE_RUNLIST, pointer(arg))
 
 
@@ -2061,15 +2190,21 @@ def nvgpu_as_ioctl_get_va_regions(fd: Any, arg: nvgpu_as_get_va_regions_args) ->
     return ioctl(fd, NVGPU_AS_IOCTL_GET_VA_REGIONS, pointer(arg))
 
 
-def nvgpu_as_ioctl_get_buffer_compbits_info(fd: Any, arg: nvgpu_as_get_buffer_compbits_info_args) -> int:
+def nvgpu_as_ioctl_get_buffer_compbits_info(
+    fd: Any, arg: nvgpu_as_get_buffer_compbits_info_args
+) -> int:
     return ioctl(fd, NVGPU_AS_IOCTL_GET_BUFFER_COMPBITS_INFO, pointer(arg))
 
 
-def nvgpu_as_ioctl_map_buffer_compbits(fd: Any, arg: nvgpu_as_map_buffer_compbits_args) -> int:
+def nvgpu_as_ioctl_map_buffer_compbits(
+    fd: Any, arg: nvgpu_as_map_buffer_compbits_args
+) -> int:
     return ioctl(fd, NVGPU_AS_IOCTL_MAP_BUFFER_COMPBITS, pointer(arg))
 
 
-def nvgpu_as_ioctl_map_buffer_batch(fd: Any, arg: nvgpu_as_map_buffer_batch_args) -> int:
+def nvgpu_as_ioctl_map_buffer_batch(
+    fd: Any, arg: nvgpu_as_map_buffer_batch_args
+) -> int:
     return ioctl(fd, NVGPU_AS_IOCTL_MAP_BUFFER_BATCH, pointer(arg))
 
 
@@ -2097,23 +2232,33 @@ def nvgpu_sched_ioctl_get_recent_tsgs(fd: Any, arg: nvgpu_sched_get_tsgs_args) -
     return ioctl(fd, NVGPU_SCHED_IOCTL_GET_RECENT_TSGS, pointer(arg))
 
 
-def nvgpu_sched_ioctl_get_tsgs_by_pid(fd: Any, arg: nvgpu_sched_get_tsgs_by_pid_args) -> int:
+def nvgpu_sched_ioctl_get_tsgs_by_pid(
+    fd: Any, arg: nvgpu_sched_get_tsgs_by_pid_args
+) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_GET_TSGS_BY_PID, pointer(arg))
 
 
-def nvgpu_sched_ioctl_tsg_get_params(fd: Any, arg: nvgpu_sched_tsg_get_params_args) -> int:
+def nvgpu_sched_ioctl_tsg_get_params(
+    fd: Any, arg: nvgpu_sched_tsg_get_params_args
+) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_TSG_GET_PARAMS, pointer(arg))
 
 
-def nvgpu_sched_ioctl_tsg_set_timeslice(fd: Any, arg: nvgpu_sched_tsg_timeslice_args) -> int:
+def nvgpu_sched_ioctl_tsg_set_timeslice(
+    fd: Any, arg: nvgpu_sched_tsg_timeslice_args
+) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_TSG_SET_TIMESLICE, pointer(arg))
 
 
-def nvgpu_sched_ioctl_tsg_set_runlist_interleave(fd: Any, arg: nvgpu_sched_tsg_runlist_interleave_args) -> int:
+def nvgpu_sched_ioctl_tsg_set_runlist_interleave(
+    fd: Any, arg: nvgpu_sched_tsg_runlist_interleave_args
+) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_TSG_SET_RUNLIST_INTERLEAVE, pointer(arg))
 
 
-def nvgpu_sched_ioctl_get_api_version(fd: Any, arg: nvgpu_sched_api_version_args) -> int:
+def nvgpu_sched_ioctl_get_api_version(
+    fd: Any, arg: nvgpu_sched_api_version_args
+) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_GET_API_VERSION, pointer(arg))
 
 
@@ -2123,5 +2268,3 @@ def nvgpu_sched_ioctl_get_tsg(fd: Any, arg: nvgpu_sched_tsg_refcount_args) -> in
 
 def nvgpu_sched_ioctl_put_tsg(fd: Any, arg: nvgpu_sched_tsg_refcount_args) -> int:
     return ioctl(fd, NVGPU_SCHED_IOCTL_PUT_TSG, pointer(arg))
-
-

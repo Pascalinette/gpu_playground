@@ -1,6 +1,7 @@
 import struct
+from gpu_memory import GpuMemoryBase
 from utils import set_bits
-from typing import Union
+from typing import Optional, Union, overload
 
 COMMAND_SUBMISSION_MODE_INCREASING_OLD = 0
 COMMAND_SUBMISSION_MODE_INCREASING = 1
@@ -30,16 +31,42 @@ _ARGUMENT_SIZE = 11
 _SUBMISSION_MODE_OFFSET = 29
 _SUBMISSION_MODE_SIZE = 2
 
-def InlineCommand(method: int, subchannel: int, argument: int, is_raw_method: bool = False) -> int:
-    return Command(method, subchannel, argument, COMMAND_SUBMISSION_MODE_INLINE, is_raw_method)
 
-def IncrCommand(method: int, subchannel: int, argument: int, is_raw_method: bool = False) -> int:
-    return Command(method, subchannel, argument, COMMAND_SUBMISSION_MODE_INCREASING, is_raw_method)
+def InlineCommand(
+    method: int, subchannel: int, argument: int, is_raw_method: bool = False
+) -> int:
+    return Command(
+        method, subchannel, argument, COMMAND_SUBMISSION_MODE_INLINE, is_raw_method
+    )
 
-def NonIncrCommand(method: int, subchannel: int, argument: int, is_raw_method: bool = False) -> int:
-    return Command(method, subchannel, argument, COMMAND_SUBMISSION_MODE_NON_INCREASING, is_raw_method)
 
-def Command(method: int, subchannel: int, argument: int, submission_mode: int, is_raw_method: bool = False) -> int:
+def IncrCommand(
+    method: int, subchannel: int, argument: int, is_raw_method: bool = False
+) -> int:
+    return Command(
+        method, subchannel, argument, COMMAND_SUBMISSION_MODE_INCREASING, is_raw_method
+    )
+
+
+def NonIncrCommand(
+    method: int, subchannel: int, argument: int, is_raw_method: bool = False
+) -> int:
+    return Command(
+        method,
+        subchannel,
+        argument,
+        COMMAND_SUBMISSION_MODE_NON_INCREASING,
+        is_raw_method,
+    )
+
+
+def Command(
+    method: int,
+    subchannel: int,
+    argument: int,
+    submission_mode: int,
+    is_raw_method: bool = False,
+) -> int:
     if not is_raw_method:
         method //= 4
 
@@ -50,6 +77,7 @@ def Command(method: int, subchannel: int, argument: int, submission_mode: int, i
     value |= set_bits(_SUBMISSION_MODE_OFFSET, _SUBMISSION_MODE_SIZE, submission_mode)
 
     return value
+
 
 # Setup utils
 BIND_CHANNEL_3D = IncrCommand(0x0, SUBCHANNEL_ID_3D, 1)
@@ -74,3 +102,18 @@ class CommandBuffer(object):
 
     def write_bytes(self, data: Union[bytes, bytearray]) -> None:
         self.buffer += bytearray(data)
+
+
+class SubmittedCommandBufferBase(object):
+    gpu_memory: GpuMemoryBase
+
+    def __init__(self, gpu_memory: GpuMemoryBase) -> None:
+        self.gpu_memory = gpu_memory
+
+    @overload
+    def wait(self, timeout: Optional[float] = None) -> bool:
+        return False
+
+    @overload
+    def close(self):
+        pass

@@ -5,13 +5,13 @@ from ctypes import (
     c_int,
     c_ulong,
     sizeof,
-    POINTER,
     CDLL,
 )
 from mmap import MAP_SHARED, PROT_READ, PROT_WRITE, mmap
 from select import *
 from typing import Any, List, Optional, Tuple, Union, overload
 from command_buffer import *
+from gpu_memory import GpuMemoryBase
 from nvmap_header import (
     NVMAP_IOC_FREE,
     nvmap_alloc_handle,
@@ -53,79 +53,11 @@ from nvgpu_header import (
     nvgpu_tsg_ioctl_bind_channel,
 )
 from os import close
+from utils import align_up, BlockDevice, ErrnoException, get_errno
 import errno
 
 libc = CDLL("libc.so.6")
-get_errno_loc = libc.__errno_location
-get_errno_loc.restype = POINTER(c_int)
-
 ioctl = libc.ioctl
-
-
-def align_up(value: int, size: int) -> int:
-    return (value + (size - 1)) & -size
-
-
-def align_down(value: int, size: int) -> int:
-    return value & -size
-
-
-class ErrnoException(Exception):
-    """Raised when an errno is returned"""
-
-    error: int
-    message: Optional[str]
-
-    def __init__(self, error: int) -> None:
-        self.error = error
-
-        if error in errno.errorcode:
-            self.message = errno.errorcode[error]
-
-        super().__init__(error)
-
-
-def get_errno() -> int:
-    return get_errno_loc()[0]
-
-
-def get_errno_code() -> Optional[str]:
-    error = get_errno()
-
-    if error != 0:
-        return errno.errorcode[error]
-
-    return None
-
-
-class BlockDevice(object):
-    file: Any
-    fd: int
-
-    def __init__(self, path: Optional[str] = None, fd: int = -1) -> None:
-        if fd != -1:
-            self.fd = fd
-        elif path is not None:
-            self.file = open(path, "wb")
-            self.fd = self.file.fileno()
-        else:
-            raise Exception("INVALID COMBINAISON")
-
-    def close(self) -> None:
-        if self.file is not None:
-            self.file.close()
-        else:
-            close(self.fd)
-
-    def check_result(self, result_code: int, output_value: Any = None) -> Any:
-        if result_code == 0:
-            return output_value
-
-        exception = ErrnoException(get_errno())
-
-        print(exception.message)
-
-        raise exception
 
 
 class NvMap(BlockDevice):
@@ -199,8 +131,7 @@ class NvHostGpu(BlockDevice):
 
         self.check_result(nvgpu_ioctl_channel_setup_bind(self.fd, request))
 
-        if errno == 0:
-            return request.work_submit_token
+        return request.work_submit_token
 
     def alloc_obj_ctx(self, class_num: int, flags: int) -> int:
         request = nvgpu_alloc_obj_ctx_args()
@@ -337,15 +268,13 @@ class NvHostGpuCtrl(BlockDevice):
         return NvHostGpu(request.unamed_field0.channel_fd)
 
 
-class GpuMemory(object):
+class GpuMemory(GpuMemoryBase):
     nvmap_instance: NvMap
     nvmap_handle: int
     user_size: int
     mmap_instance: mmap
 
     address_space: NvAddressSpace
-    gpu_address: int
-    gpu_memory_size: int
 
     def __init__(
         self,
@@ -357,13 +286,12 @@ class GpuMemory(object):
         gpu_address: int,
         gpu_memory_size: int,
     ) -> None:
+        super().__init__(gpu_address, gpu_memory_size)
         self.nvmap_instance = nvmap_instance
         self.nvmap_handle = nvmap_handle
         self.user_size = user_size
         self.mmap_instance = mmap_instance
         self.address_space = address_space
-        self.gpu_address = gpu_address
-        self.gpu_memory_size = gpu_memory_size
 
     def __getitem__(self, index: slice) -> bytes:
         return self.mmap_instance.__getitem__(index)

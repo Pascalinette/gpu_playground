@@ -5,14 +5,10 @@ from ctypes import *
 from utils import *
 
 
-libc = CDLL('libc.so.6')
+libc = CDLL("libc.so.6")
 ioctl = libc.ioctl
 NVMAP_ELEM_SIZE_U64: int = 0x80000000
 NVMAP_IOC_MAGIC: int = 0x4E
-
-
-
-
 
 
 class nvmap_create_handle_unamed_union_0_unamed_struct_0_unamed_union_0(Union):
@@ -24,7 +20,10 @@ class nvmap_create_handle_unamed_union_0_unamed_struct_0_unamed_union_0(Union):
 
 class nvmap_create_handle_unamed_union_0_unamed_struct_0(Structure):
     _fields_ = [
-        ("unamed_field0", nvmap_create_handle_unamed_union_0_unamed_struct_0_unamed_union_0),
+        (
+            "unamed_field0",
+            nvmap_create_handle_unamed_union_0_unamed_struct_0_unamed_union_0,
+        ),
         ("handle", c_uint),
     ]
 
@@ -38,7 +37,10 @@ class nvmap_create_handle_unamed_union_0_unamed_struct_1_unamed_union_0(Union):
 
 class nvmap_create_handle_unamed_union_0_unamed_struct_1(Structure):
     _fields_ = [
-        ("unamed_field0", nvmap_create_handle_unamed_union_0_unamed_struct_1_unamed_union_0),
+        (
+            "unamed_field0",
+            nvmap_create_handle_unamed_union_0_unamed_struct_1_unamed_union_0,
+        ),
     ]
 
 
@@ -51,7 +53,10 @@ class nvmap_create_handle_unamed_union_0_unamed_struct_2_unamed_union_0(Union):
 
 class nvmap_create_handle_unamed_union_0_unamed_struct_2(Structure):
     _fields_ = [
-        ("unamed_field0", nvmap_create_handle_unamed_union_0_unamed_struct_2_unamed_union_0),
+        (
+            "unamed_field0",
+            nvmap_create_handle_unamed_union_0_unamed_struct_2_unamed_union_0,
+        ),
     ]
 
 
@@ -433,5 +438,3 @@ def nvmap_ioc_alloc_ivm(fd: Any, arg: nvmap_alloc_ivm_handle) -> int:
 
 def nvmap_ioc_query_heap_params(fd: Any, arg: nvmap_query_heap_params) -> int:
     return ioctl(fd, NVMAP_IOC_QUERY_HEAP_PARAMS, pointer(arg))
-
-

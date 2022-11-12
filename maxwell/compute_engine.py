@@ -1,8 +1,9 @@
 from command_buffer import *
-from nvgpu import GpuMemory, align_up
+from gpu_memory import GpuMemoryBase
 from maxwell.hw import *
 from maxwell.hw.compute_b import *
 from maxwell.hw.compute_b_qmd import *
+from utils import align_up
 
 import typing
 
@@ -12,8 +13,8 @@ CONSTANT_BUFFER_ALIGN_REQUIREMENT = 0x100
 
 def initialize_compute_engine(
     command_buffer: CommandBuffer,
-    scratch_memory: GpuMemory,
-    shader_program_memory: GpuMemory,
+    scratch_memory: GpuMemoryBase,
+    shader_program_memory: GpuMemoryBase,
     bindless_texture_cbuff_index: int,
     sm_count: int,
 ):
