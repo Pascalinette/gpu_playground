@@ -228,9 +228,16 @@ def create_struct(node: Cursor, is_anonymous: bool = False) -> Optional[ParsedSt
             result_field: ParsedStructField
             node_type = child.type.spelling
             if "[" in node_type:
-                array_type = node_type[: node_type.index(" [")]
+                tmp_idx = node_type.find(" [")
+                tmp_offset = 2
+
+                if tmp_idx == -1:
+                    tmp_idx = node_type.find("[")
+                    tmp_offset = 1
+
+                array_type = node_type[:tmp_idx]
                 element_count = int(
-                    node_type[node_type.index(" [") + 2 : node_type.index("]")]
+                    node_type[tmp_idx + tmp_offset : node_type.index("]")]
                 )
 
                 result_field = ParsedStructField(
