@@ -30,4 +30,7 @@ qmd_struct = qmdv0300.from_buffer_copy(raw_bin)
 print("QMD output")
 for raw_field in qmd_struct._fields_:
     field_name = raw_field[0]
+    if field_name.startswith("pad_"):
+        continue
+
     print("    {}: {}".format(field_name, getattr(qmd_struct, field_name)))

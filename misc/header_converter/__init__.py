@@ -327,7 +327,7 @@ def print_union(stream: CodeStream, struct: ParsedUnion) -> None:
 
     unamed_index = 0
 
-    for (field_name, field_type) in ctypes_fields:
+    for field_name, field_type in ctypes_fields:
         if field_name == "":
             field_name = f"unamed_field{unamed_index}"
             unamed_index += 1
@@ -388,7 +388,7 @@ def print_struct(stream: CodeStream, struct: ParsedStruct) -> None:
 
     unamed_index = 0
 
-    for (field_name, field_type) in ctypes_fields:
+    for field_name, field_type in ctypes_fields:
         if field_name == "":
             field_name = f"unamed_field{unamed_index}"
             unamed_index += 1
@@ -914,13 +914,27 @@ def print_nv_qmd(stream: CodeStream, qmd: QmdStruct):
 
     unamed_index = 0
 
-    for (field_name, bitfield_end, bitfield_start) in qmd.fields:
+    for field_idx in range(0, len(qmd.fields)):
+        if field_idx == 0:
+            (prev_field_name, prev_bitfield_end, prev_bitfield_start) = ("start", 0, 0)
+        else:
+            (prev_field_name, prev_bitfield_end, prev_bitfield_start) = qmd.fields[
+                field_idx - 1
+            ]
+
+        (field_name, bitfield_end, bitfield_start) = qmd.fields[field_idx]
+        if field_idx != 0 and (prev_bitfield_end + 1) != bitfield_start:
+            stream.write_line(
+                f'("pad_{prev_bitfield_end}_{bitfield_start}", c_uint, {bitfield_start - prev_bitfield_end - 1}),'
+            )
+
         stream.write_line(
             f'("{field_name}", c_uint, {bitfield_end - bitfield_start + 1}),'
         )
 
     stream.unindent()
     stream.write_line("]")
+
     stream.unindent()
     stream.write_line()
     stream.write_line()
